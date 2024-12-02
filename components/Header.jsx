@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef } from "react";
-import { useCart } from "./context/CartContext";
+import { useCartStore } from "@/store/customerStore";
 import Link from "next/link";
 
 export default function Header({ categories, onCategoryClick }) {
-  const { cart } = useCart();
-  const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const { cart } = useCartStore();
+  const cartItemCount = cart.reduce((sum, i) => sum + i.quantity, 0)
+
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-custom">
@@ -23,8 +23,8 @@ export default function Header({ categories, onCategoryClick }) {
           <Link href="/customer/orders" className="text-gray-600 hover:text-primary transition-colors">
             Orders
           </Link>
-          <Link 
-            href="/customer/cart" 
+          <Link
+            href="/customer/cart"
             className="bg-customYellow text-white px-4 py-2 rounded-full shadow-md 
                      flex items-center gap-2 transform transition-all hover:scale-105 
                      hover:bg-yellow-600"
@@ -39,7 +39,7 @@ export default function Header({ categories, onCategoryClick }) {
       <div className="bg-background py-3 border-t relative">
         {/* Left fade gradient */}
         <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10"></div>
-        
+
         <div className="container mx-auto relative">
           <div className="flex overflow-x-scroll gap-4 no-scrollbar px-8 py-1 scroll-smooth">
             {categories.map((category, index) => (

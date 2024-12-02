@@ -1,5 +1,7 @@
 "use client";
 
+
+import Image from "next/image";
 import { useState } from "react";
 
 export default function MenuItemModal({ item, onClose, onAddToCart }) {
@@ -9,13 +11,13 @@ export default function MenuItemModal({ item, onClose, onAddToCart }) {
   const decreaseQuantity = () => setQuantity(quantity > 1 ? quantity - 1 : 1);
 
   const handleAddToCart = () => {
-    onAddToCart(item, quantity); // Call the addToCart function
-    onClose(); // Close the modal
+    onAddToCart(item, quantity);
+    onClose();
   };
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
-      onClose(); // Close the modal if clicked on the backdrop
+      onClose();
     }
   };
 
@@ -31,7 +33,9 @@ export default function MenuItemModal({ item, onClose, onAddToCart }) {
         </button>
 
         {/* Item Image */}
-        <img src={item.image} alt={item.name} className="w-full h-48 object-cover rounded-lg mb-4" />
+        <Image src={item.image}
+          width={70} height={70}
+          alt={item.name} className="w-full h-48 object-cover rounded-lg mb-4" />
 
         {/* Item Details */}
         <h2 className="text-2xl font-bold mb-2">{item.name}</h2>

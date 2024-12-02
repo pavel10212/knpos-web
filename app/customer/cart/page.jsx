@@ -1,36 +1,19 @@
 "use client";
 
-import { useCart } from "@/components/context/CartContext";
+import { useCartStore } from '@/store/customerStore'
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Cart() {
-  const { cart, setCart, saveOrder } = useCart();
+  const { cart, calculateTotal, setCart, saveOrder, removeFromCart, updateQuantity } = useCartStore();
   const router = useRouter();
-
-  const removeFromCart = (itemId) => {
-    setCart(cart.filter((item) => item.id !== itemId));
-  };
-
-  const updateQuantity = (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
-    setCart(
-      cart.map((item) =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const total = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const total = calculateTotal();
 
   const handleSendOrder = () => {
     saveOrder(cart, total);
     router.push(`/customer/order-confirmation?total=${total}`);
-    setCart([]); // Clear the cart after order is sent
+    setCart([]);
   };
 
   return (
@@ -94,7 +77,7 @@ export default function Cart() {
             ))}
 
             <Link
-              href="/"
+              href="/customer/"
               className="text-yellow-500 text-center block mt-4 mb-6 font-medium"
             >
               + Add more food to order
