@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import FloorTabs from "@/components/layout/FloorTabs";
+import TableTemplates from "@/components/layout/TableTemplates";
+import DraggableTable from "@/components/layout/DraggableTable";
 
 const Layout = () => {
   const [activeFloor, setActiveFloor] = useState(1);
@@ -127,31 +130,13 @@ const Layout = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Layout</h1>
 
-      <div className="flex space-x-2 mb-6">
-        {floors.map((floor) => (
-          <button
-            key={floor.id}
-            className={`${
-              activeFloor === floor.id ? "bg-blue-500" : "bg-blue-300"
-            } text-white py-2 px-4 rounded-md shadow-md focus:outline-none`}
-            onClick={() => setActiveFloor(floor.id)}
-          >
-            Floor {floor.id}
-          </button>
-        ))}
-        <button
-          onClick={addNewFloor}
-          className="bg-gray-200 text-black py-2 px-4 rounded-md shadow-md focus:outline-none"
-        >
-          +
-        </button>
-        <button
-          onClick={saveLayout}
-          className="bg-green-500 text-white py-2 px-4 rounded-md shadow-md focus:outline-none"
-        >
-          Save Layout
-        </button>
-      </div>
+      <FloorTabs
+        floors={floors}
+        activeFloor={activeFloor}
+        setActiveFloor={setActiveFloor}
+        onAddFloor={addNewFloor}
+        onSave={saveLayout}
+      />
 
       {/* Drop Zone */}
       <div
@@ -162,75 +147,20 @@ const Layout = () => {
         {floors
           .find((floor) => floor.id === activeFloor)
           .tables.map((table) => (
-            <div
+            <DraggableTable
               key={table.id}
-              className={`absolute flex flex-col items-center justify-center border-2 ${
-                table.status === "occupied"
-                  ? "border-red-400 bg-red-50"
-                  : table.status === "reserved"
-                  ? "border-yellow-400 bg-yellow-50"
-                  : "border-gray-400 bg-white"
-              } cursor-move hover:border-blue-600 hover:shadow-lg transition-all ${
-                table.type === "2-seater"
-                  ? "rounded-full w-24 h-24"
-                  : table.type === "6-seater"
-                  ? "rounded-lg w-48 h-32" // made wider
-                  : "rounded-lg w-32 h-32"
-              }`}
-              style={{
-                left: `${table.x}px`,
-                top: `${table.y}px`,
-                transform: `rotate(${table.rotation}deg)`,
-              }}
-              draggable
-              onDragStart={(e) => handleDragStart(e, table.id, false)}
-            >
-              <span className="text-center text-base font-semibold whitespace-pre text-gray-800">
-                {table.label}
-              </span>
-              <div className="absolute top-1 right-1 flex space-x-1">
-                <button
-                  onClick={() => handleRotateTable(table.id)}
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  ⟳
-                </button>
-                <button
-                  onClick={() => handleRemoveTable(table.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
+              table={table}
+              onDragStart={handleDragStart}
+              onRotate={handleRotateTable}
+              onRemove={handleRemoveTable}
+            />
           ))}
       </div>
 
-      {/* Predefined Tables */}
-      <div className="p-4 border-t-2 border-gray-300 bg-gray-100">
-        <h2 className="text-black text-lg font-bold mb-4">Table Templates</h2>
-        <div className="flex space-x-4">
-          {predefinedTables.map((table, index) => (
-            <div
-              key={index}
-              className={`flex items-center justify-center border-2 border-gray-400 bg-white cursor-move 
-              hover:border-blue-600 hover:shadow-lg hover:bg-blue-50 transition-all ${
-                table.shape === "circle" ? "rounded-full" : "rounded-lg"
-              } ${table.size}`}
-              draggable
-              onDragStart={(e) => handleDragStart(e, table.type, true)}
-            >
-              <span className="text-center text-base font-semibold text-gray-800">
-                {table.type === "2-seater"
-                  ? "2"
-                  : table.type === "6-seater"
-                  ? "6"
-                  : "4"}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <TableTemplates
+        predefinedTables={predefinedTables}
+        onDragStart={handleDragStart}
+      />
     </div>
   );
 };
