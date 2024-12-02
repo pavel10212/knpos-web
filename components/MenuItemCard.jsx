@@ -9,8 +9,8 @@ export default function MenuItemCard({ name, price, rating, image, onClick }) {
     >
       <div className="relative">
         <Image
-          width={40}
-          height={40}
+          width={70}
+          height={70}
           src={image} alt={name} className="w-full h-48 object-cover" />
         <div className="absolute top-2 right-2 bg-white bg-opacity-90 px-2 py-1 rounded-full">
           <div className="flex items-center text-sm">

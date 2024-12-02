@@ -2,15 +2,16 @@
 
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useCart } from '@/components/context/CartContext';
+import { useCartStore } from '@/store/customerStore';
+
 
 export default function OrderConfirmation() {
   const searchParams = useSearchParams();
-  const { orders } = useCart();
+  const { cart } = useCartStore();
   const total = parseFloat(searchParams.get('total') || '0');
   const VAT = total * 0.20; // 20% VAT
   const totalWithVAT = total + VAT;
-  const orderNumber = orders.length; // Get the current order number
+  const orderNumber = cart.length; // Get the current order number
 
   return (
     <div className="bg-gray-50 min-h-screen p-4">
