@@ -10,10 +10,10 @@ const port = 3000;
 const sslCertificate = fs.readFileSync("us-east-1-bundle.pem").toString();
 
 const client = new Client({
-  host: "knpos-database.chq84ao80cyq.us-east-1.rds.amazonaws.com",
+  host: "none",
   port: 5432,
   user: "postgres",
-  password: "JXBy2NuoEuwZJc0mcDb6",
+  password: "none",
   database: "postgres",
   ssl: {
     ca: sslCertificate,
