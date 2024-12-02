@@ -17,8 +17,8 @@ const Sidebar = () => {
   const pathname = usePathname();
   const menuItems = [
     {
-      title: "Reports",
-      path: "/admin/dashboard/",
+      title: "Dashboard",
+      path: "/admin/dashboard",
       icon: <MdAssessment className="text-2xl" />,
     },
     {
