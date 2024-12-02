@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import FloorTabs from "@/components/layout/FloorTabs";
+
 import TableTemplates from "@/components/layout/TableTemplates";
 import DraggableTable from "@/components/layout/DraggableTable";
 
@@ -120,24 +120,15 @@ const Layout = () => {
     alert("Layout saved successfully!");
   };
 
-  const addNewFloor = () => {
-    const newFloorId = floors.length + 1;
-    setFloors([...floors, { id: newFloorId, tables: [] }]);
-    setActiveFloor(newFloorId);
-  };
-
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Layout</h1>
-
-      <FloorTabs
-        floors={floors}
-        activeFloor={activeFloor}
-        setActiveFloor={setActiveFloor}
-        onAddFloor={addNewFloor}
-        onSave={saveLayout}
-      />
-
+      <button
+        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
+        onClick={saveLayout}
+      >
+        Save Changes
+      </button>
       {/* Drop Zone */}
       <div
         className="relative w-full h-[500px] border border-gray-300 bg-gray-50 mb-6"
