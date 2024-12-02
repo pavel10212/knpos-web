@@ -1,59 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CategoryTabs from "@/components/menu/CategoryTabs";
 import MenuCard from "@/components/menu/MenuCard";
 import AddCategoryModal from "@/components/menu/AddCategoryModal";
 import AddItemModal from "@/components/menu/AddItemModal";
 
 const Menu = () => {
-  const [menuItems, setMenuItems] = useState({
-    Starter: [
-      {
-        id: 1,
-        title: "Spring Rolls",
-        price: "$6.00",
-        image: "https://via.placeholder.com/150",
-        description: "Crispy spring rolls with vegetable filling",
-      },
-      {
-        id: 2,
-        title: "Soup",
-        price: "$5.00",
-        image: "https://via.placeholder.com/150",
-      },
-    ],
-    "Main Course": [
-      {
-        id: 3,
-        title: "Steak",
-        price: "$25.00",
-        image: "https://via.placeholder.com/150",
-      },
-      {
-        id: 4,
-        title: "Pasta",
-        price: "$15.00",
-        image: "https://via.placeholder.com/150",
-      },
-    ],
-    Drinks: [
-      {
-        id: 5,
-        title: "Cola",
-        price: "$3.00",
-        image: "https://via.placeholder.com/150",
-      },
-    ],
-    Desserts: [
-      {
-        id: 6,
-        title: "Ice Cream",
-        price: "$7.00",
-        image: "https://via.placeholder.com/150",
-      },
-    ],
-  });
+  const [menuItems, setMenuItems] = useState({})
+
+  const fetchData = async () => {
+    try {
+      const data = await fetch("http://54.161.199.35:3000/menu-get")
+      const menuItems = await data.json()
+      setMenuItems(menuItems)
+    } catch (error) {
+      console.error(error);
+
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  console.log(fetchData)
 
   const [activeTab, setActiveTab] = useState("Starter");
   const [isModalOpen, setIsModalOpen] = useState(false);
