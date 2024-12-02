@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import Head from "next/head";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
-import { useCart } from "@/components/context/CartContext";
+import { useCartStore } from "@/store/customerStore";
 
 export default function Home() {
   const categories = ["Most Popular", "Salad", "Pasta", "Desserts", "Beverages"];
@@ -23,14 +23,14 @@ export default function Home() {
   ];
 
   const [selectedItem, setSelectedItem] = useState(null);
-  const { addToCart } = useCart();
+  const { addToCart } = useCartStore();
   const categoryRefs = useRef(categories.reduce((acc, category) => {
     acc[category] = React.createRef();
     return acc;
   }, {}));
 
   const handleCategoryClick = (category) => {
-    const headerHeight = 180; // Combined height of both header sections
+    const headerHeight = 180;
     const elementPosition = categoryRefs.current[category]?.current?.getBoundingClientRect().top;
     const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
 
@@ -43,7 +43,7 @@ export default function Home() {
   const getCategoryItems = (category) => menuItems.filter((item) => item.category === category);
 
   return (
-    <>
+    <div suppressHydrationWarning>
       <Head>
         <title>Hinkali Georgian Restaurant</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -92,6 +92,6 @@ export default function Home() {
           />
         )}
       </div>
-    </>
+    </div>
   );
 }
