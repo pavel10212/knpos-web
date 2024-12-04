@@ -8,16 +8,20 @@ import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
 import { useCartStore } from "@/store/customerStore";
 
+
 const getUniqueCategories = (menuItems) => {
-  if (!menuItems || !menuItems.result) return [];
-  const allCategories = menuItems.result.map(item => item.category);
-  return [...new Set(allCategories)];
-};
+  const allCategories = Object.values(menuItems)
+    .flat()
+    .map(item => item.category);
+
+  return ['All', ...new Set(allCategories)];
+}
+
 
 export default function Home() {
   const [menuItems, setMenuItems] = useState({});
   const [categories, setCategories] = useState([]);
-  
+
   const fetchData = async () => {
     try {
       const cachedData = localStorage.getItem('menuData');
@@ -45,8 +49,9 @@ export default function Home() {
     fetchData();
   }, []);
 
+
   useEffect(() => {
-    if (menuItems && menuItems.result) {
+    if (menuItems) {
       setCategories(getUniqueCategories(menuItems));
     }
   }, [menuItems]);
@@ -74,9 +79,9 @@ export default function Home() {
   };
 
   const getCategoryItems = (category) => {
-    if (!menuItems || !menuItems.result) return [];
-    
-    return menuItems.result
+    if (!menuItems) return [];
+
+    return menuItems
       .filter((item) => item.category === category)
       .map(item => ({
         id: item.menu_item_id,

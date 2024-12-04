@@ -80,12 +80,24 @@ const Menu = () => {
       });
 
       if (!response.ok) {
+
         throw new Error('Failed to add item');
       }
 
-      const addedItem = await response.json();
-      console.log(addedItem, "Server Response")
 
+      const addedItem = await response.json();
+
+
+
+      console.log(addedItem, "Server Response")
+      setMenuItems(prevItems => {
+        const newState = {
+          ...prevItems, addedItem
+        };
+
+        localStorage.setItem('menuData', JSON.stringify(newState));
+        return newState;
+      });
 
 
       setNewItem({ title: "", price: "", description: "", image: "", category: "" });
