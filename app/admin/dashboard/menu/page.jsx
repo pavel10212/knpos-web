@@ -22,7 +22,7 @@ const Menu = () => {
       if (!cachedData) {
         try {
           console.log("No cached data found, fetching from server...");
-          const response = await fetch("http://52.91.196.36:3000/menu-get");
+          const response = await fetch("http://44.202.118.242:3000/menu-get");
           const data = await response.json();
           setMenuItems(data);
           localStorage.setItem('menuData', JSON.stringify(data));
@@ -71,7 +71,7 @@ const Menu = () => {
         menu_item_image: null // TODO: Implement proper image handling later
       };
 
-      const response = await fetch('http://52.91.196.36:3000/menu-insert', {
+      const response = await fetch("http://44.202.118.242:3000/menu-insert", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
