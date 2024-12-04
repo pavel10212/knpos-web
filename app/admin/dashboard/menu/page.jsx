@@ -3,71 +3,100 @@
 import React, { useState, useEffect } from "react";
 import CategoryTabs from "@/components/menu/CategoryTabs";
 import MenuCard from "@/components/menu/MenuCard";
-import AddCategoryModal from "@/components/menu/AddCategoryModal";
 import AddItemModal from "@/components/menu/AddItemModal";
 
+const getUniqueCategories = (menuItems) => {
+  const allCategories = Object.values(menuItems)
+    .flat()
+    .map(item => item.category);
+
+  return ['All', ...new Set(allCategories)];
+}
+
 const Menu = () => {
-  const [menuItems, setMenuItems] = useState({})
+  const [menuItems, setMenuItems] = useState({});
 
   const fetchData = async () => {
     try {
-      const data = await fetch("http://54.161.199.35:3000/menu-get")
-      const menuItems = await data.json()
-      setMenuItems(menuItems)
+      const cachedData = localStorage.getItem('menuData');
+      if (!cachedData) {
+        try {
+          console.log("No cached data found, fetching from server...");
+          const response = await fetch("http://52.91.196.36:3000/menu-get");
+          const data = await response.json();
+          setMenuItems(data);
+          localStorage.setItem('menuData', JSON.stringify(data));
+        } catch (error) {
+          alert("Could not fetch from server")
+          console.log("Could not fetch from server")
+        }
+      } else {
+        console.log("Cached data found, using that...");
+        console.log(cachedData, "my cache")
+        setMenuItems(JSON.parse(cachedData));
+      }
     } catch (error) {
-      console.error(error);
-
+      console.error('Error fetching menu data:', error);
     }
   }
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
-  console.log(fetchData)
+  console.log(menuItems);
 
-  const [activeTab, setActiveTab] = useState("Starter");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCategory, setNewCategory] = useState("");
-  const [tabs, setTabs] = useState([
-    "Starter",
-    "Main Course",
-    "Drinks",
-    "Desserts",
-  ]);
+  const tabs = getUniqueCategories(menuItems);
+  const [activeTab, setActiveTab] = useState("");
 
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+
   const [newItem, setNewItem] = useState({
     title: "",
     price: "",
     description: "",
     image: "",
+    category: ""
   });
 
-  const handleAddItem = (e) => {
+  const handleAddItem = async (e) => {
     e.preventDefault();
-    const file = e.target.image.files[0];
-    const imageUrl = URL.createObjectURL(file);
 
-    const formattedPrice = newItem.price.startsWith("$")
-      ? newItem.price
-      : `$${newItem.price}`;
+    try {
+      const menuItemData = {
+        menu_item_name: newItem.title,
+        price: newItem.price,
+        description: newItem.description,
+        category: newItem.category,
+        menu_item_image: null // TODO: Implement proper image handling later
+      };
 
-    const newMenuItem = {
-      id: Date.now(),
-      ...newItem,
-      price: formattedPrice,
-      image: imageUrl,
-    };
+      const response = await fetch('http://52.91.196.36:3000/menu-insert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(menuItemData)
+      });
 
-    setMenuItems((prev) => ({
-      ...prev,
-      [activeTab]: [...(prev[activeTab] || []), newMenuItem],
-    }));
+      if (!response.ok) {
+        throw new Error('Failed to add item');
+      }
 
-    setNewItem({ title: "", price: "", description: "", image: "" });
-    setIsAddItemModalOpen(false);
+      const addedItem = await response.json();
+      console.log(addedItem, "Server Response")
+
+
+
+      setNewItem({ title: "", price: "", description: "", image: "", category: "" });
+      setIsAddItemModalOpen(false);
+
+    } catch (error) {
+      console.error('Error adding menu item:', error);
+    }
   };
+
+  console.log(menuItems, "menuitems")
 
   const handleDeleteItem = (itemId) => {
     setMenuItems((prev) => ({
@@ -76,7 +105,10 @@ const Menu = () => {
     }));
   };
 
-  const currentItems = menuItems[activeTab] || [];
+  const currentItems = Object.values(menuItems)
+    .flat()
+    .filter(item => activeTab === "All" || !activeTab || item.category === activeTab);
+
 
   return (
     <div className="p-6">
@@ -86,33 +118,36 @@ const Menu = () => {
         tabs={tabs}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onAddCategory={() => setIsModalOpen(true)}
       />
 
       <div className="grid grid-cols-4 gap-4">
-        {currentItems.map((item) => (
-          <MenuCard key={item.id} item={item} onDelete={handleDeleteItem} />
+        {Array.isArray(currentItems) && currentItems.map((item) => (
+          <MenuCard
+            key={item.menu_item_id}
+            item={{
+              id: item.menu_item_id,
+              menu_item_name: item.menu_item_name,
+              menu_item_image: item.menu_item_image || '/placeholder-image.jpg', // Add a fallback image
+              description: item.description,
+              price: item.price,
+              category: item.category
+            }}
+            onDelete={handleDeleteItem}
+          />
         ))}
         <div
           className="flex items-center justify-center border-2 border-dashed border-gray-400 rounded-lg h-48 hover:bg-gray-100 cursor-pointer bg-gray-50"
-          onClick={() => setIsAddItemModalOpen(true)}
+          onClick={() => {
+            setNewItem(prev => ({
+              ...prev,
+              category: activeTab !== "All" ? activeTab : ""
+            }));
+            setIsAddItemModalOpen(true);
+          }}
         >
           <span className="text-4xl font-light text-gray-600">+</span>
         </div>
       </div>
-
-      <AddCategoryModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={(e) => {
-          e.preventDefault();
-          setTabs([...tabs, newCategory]);
-          setNewCategory("");
-          setIsModalOpen(false);
-        }}
-        value={newCategory}
-        onChange={(e) => setNewCategory(e.target.value)}
-      />
 
       <AddItemModal
         isOpen={isAddItemModalOpen}
@@ -120,6 +155,7 @@ const Menu = () => {
         onSubmit={handleAddItem}
         newItem={newItem}
         setNewItem={setNewItem}
+        activeTab={activeTab}
       />
     </div>
   );

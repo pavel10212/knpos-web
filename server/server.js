@@ -22,16 +22,6 @@ const client = new Client({
 
 client.connect();
 
-app.get("/data", async (req, res) => {
-  try {
-    const result = await client.query("SELECT * FROM orders");
-    res.json(result.rows);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Error fetching data");
-  }
-});
-
 app.get("/menu-get", async (req, res) => {
   try {
     const result = await client.query("SELECT * FROM menu_item");

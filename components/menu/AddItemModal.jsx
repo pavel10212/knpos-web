@@ -1,4 +1,4 @@
-const AddItemModal = ({ isOpen, onClose, onSubmit, newItem, setNewItem }) => {
+const AddItemModal = ({ isOpen, onClose, onSubmit, newItem, setNewItem, activeTab }) => {
   if (!isOpen) return null;
 
   return (
@@ -16,7 +16,6 @@ const AddItemModal = ({ isOpen, onClose, onSubmit, newItem, setNewItem }) => {
                 name="image"
                 accept="image/*"
                 className="text-black mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                required
               />
             </div>
             <div>
@@ -29,6 +28,20 @@ const AddItemModal = ({ isOpen, onClose, onSubmit, newItem, setNewItem }) => {
                 value={newItem.title}
                 onChange={(e) =>
                   setNewItem({ ...newItem, title: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-800 mb-1">
+                Category
+              </label>
+              <input
+                type="text"
+                className="text-black mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                value={newItem.category || (activeTab !== "All" ? activeTab : "")}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, category: e.target.value })
                 }
                 required
               />
