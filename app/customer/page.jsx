@@ -8,47 +8,40 @@ import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
 import { useCartStore } from "@/store/customerStore";
 
-
 const getUniqueCategories = (menuItems) => {
   const allCategories = Object.values(menuItems)
     .flat()
-    .map(item => item.category);
+    .map((item) => item.category);
 
-  return ['All', ...new Set(allCategories)];
-}
-
+  return [...new Set(allCategories)];
+};
 
 export default function Home() {
   const [menuItems, setMenuItems] = useState({});
   const [categories, setCategories] = useState([]);
+  const categoryRefs = useRef({});
 
   const fetchData = async () => {
     try {
-      const cachedData = localStorage.getItem('menuData');
+      const cachedData = localStorage.getItem("menuData");
       if (!cachedData) {
-        try {
-          console.log("No cached data found, fetching from server...");
-          const response = await fetch("http://44.202.118.242:3000/menu-get");
-          const data = await response.json();
-          setMenuItems(data);
-          localStorage.setItem('menuData', JSON.stringify(data));
-        } catch (error) {
-          alert("Could not fetch from server");
-          console.log("Could not fetch from server");
-        }
+        console.log("No cached data found, fetching from server...");
+        const response = await fetch("http://44.202.118.242:3000/menu-get");
+        const data = await response.json();
+        setMenuItems(data);
+        localStorage.setItem("menuData", JSON.stringify(data));
       } else {
         console.log("Cached data found, using that...");
         setMenuItems(JSON.parse(cachedData));
       }
     } catch (error) {
-      console.error('Error fetching menu data:', error);
+      console.error("Error fetching menu data:", error);
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
-
 
   useEffect(() => {
     if (menuItems) {
@@ -56,26 +49,22 @@ export default function Home() {
     }
   }, [menuItems]);
 
-  const [selectedItem, setSelectedItem] = useState(null);
-  const { addToCart } = useCartStore();
-  const categoryRefs = useRef({});
-
-  useEffect(() => {
-    categoryRefs.current = categories.reduce((acc, category) => {
-      acc[category] = React.createRef();
-      return acc;
-    }, {});
-  }, [categories]);
-
   const handleCategoryClick = (category) => {
-    const headerHeight = 180;
-    const elementPosition = categoryRefs.current[category]?.current?.getBoundingClientRect().top;
-    const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+    const headerHeight = document.querySelector("header")?.offsetHeight || 180; // Dynamically get header height
+    const categoryElement = categoryRefs.current[category]?.current;
 
-    window.scrollTo({
-      top: offsetPosition,
-      behavior: "smooth"
-    });
+    if (categoryElement) {
+      const elementPosition = categoryElement.getBoundingClientRect().top;
+      const offsetPosition = window.scrollY + elementPosition - headerHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+    } else {
+      console.error(`Category "${category}" not found in refs.`);
+      console.log("Current refs:", categoryRefs.current);
+    }
   };
 
   const getCategoryItems = (category) => {
@@ -83,24 +72,18 @@ export default function Home() {
 
     return menuItems
       .filter((item) => item.category === category)
-      .map(item => ({
+      .map((item) => ({
         id: item.menu_item_id,
         name: item.menu_item_name,
         price: item.price,
-        image: item.menu_item_image || '/placeholder-image.jpg',
+        image: item.menu_item_image || "/placeholder-image.jpg",
         description: item.description,
-        category: item.category
+        category: item.category,
       }));
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  // Add this console.log for debugging
-  useEffect(() => {
-    console.log("Current menuItems:", menuItems);
-  }, [menuItems]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const { addToCart } = useCartStore();
 
   return (
     <div suppressHydrationWarning>
@@ -115,16 +98,28 @@ export default function Home() {
 
         {/* Main Content */}
         <main className="container mx-auto p-4 flex-grow pb-20 bg-white">
-          <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">Choose the best dish for you</h1>
+          <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">
+            Choose the best dish for you
+          </h1>
 
           {/* Menu Sections */}
           <div className="mt-4 space-y-8 pb-4 ">
             {categories.map((category) => (
-              <div key={category} ref={categoryRefs.current[category]} className="pt-4">
+              <div
+                key={category}
+                ref={(el) => {
+                  if (!categoryRefs.current[category]) {
+                    categoryRefs.current[category] = { current: el };
+                  }
+                }}
+                className="pt-4"
+              >
                 <h2 className="text-xl font-bold text-gray-800 mb-4">{category}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   {getCategoryItems(category).length === 0 ? (
-                    <p className="text-gray-500 text-center col-span-2">No items found in this category.</p>
+                    <p className="text-gray-500 text-center col-span-2">
+                      No items found in this category.
+                    </p>
                   ) : (
                     getCategoryItems(category).map((item) => (
                       <MenuItemCard
