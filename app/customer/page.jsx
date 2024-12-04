@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Head from "next/head";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -8,26 +8,59 @@ import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
 import { useCartStore } from "@/store/customerStore";
 
+const getUniqueCategories = (menuItems) => {
+  if (!menuItems || !menuItems.result) return [];
+  const allCategories = menuItems.result.map(item => item.category);
+  return [...new Set(allCategories)];
+};
+
 export default function Home() {
-  const categories = ["Most Popular", "Salad", "Pasta", "Desserts", "Beverages"];
-  const menuItems = [
-    { id: 1, category: "Most Popular", name: "Khinkali dumpling", price: 60, rating: 5.0, image: "/images/khinkalidumplings.jpg", description: "Delicious Georgian dumplings filled with meat or cheese." },
-    { id: 2, category: "Most Popular", name: "Khachapuri", price: 290, rating: 5.0, image: "/images/khachapuri.jpg", description: "Cheesy bread with an egg yolk in the center." },
-    { id: 3, category: "Salad", name: "Green Salad", price: 150, rating: 4.2, image: "/images/green-salad.jpg", description: "Fresh greens with a light vinaigrette." },
-    { id: 4, category: "Salad", name: "Avo Salad", price: 180, rating: 4.8, image: "/images/avo-salad.jpg", description: "Avocado, mixed greens, and a citrus dressing." },
-    { id: 5, category: "Pasta", name: "Spaghetti Carbonara", price: 220, rating: 4.6, image: "/images/spaghetti.jpg", description: "Classic Italian pasta with creamy sauce and bacon." },
-    { id: 6, category: "Desserts", name: "Cake", price: 220, rating: 4.6, image: "/images/cake.jpg", description: "Classic Italian Cake." },
-    { id: 7, category: "Desserts", name: "Ice Cream", price: 220, rating: 4.6, image: "/images/icecream.jpg", description: "Classic Italian Gelato." },
-    { id: 8, category: "Beverages", name: "Coke", price: 20, rating: 4.6, image: "/images/coke.jpg", description: "Classic coke." },
-    { id: 9, category: "Beverages", name: "Water", price: 10, rating: 4.6, image: "/images/water.jpg", description: "Classic water." },
-  ];
+  const [menuItems, setMenuItems] = useState({});
+  const [categories, setCategories] = useState([]);
+  
+  const fetchData = async () => {
+    try {
+      const cachedData = localStorage.getItem('menuData');
+      if (!cachedData) {
+        try {
+          console.log("No cached data found, fetching from server...");
+          const response = await fetch("http://44.202.118.242:3000/menu-get");
+          const data = await response.json();
+          setMenuItems(data);
+          localStorage.setItem('menuData', JSON.stringify(data));
+        } catch (error) {
+          alert("Could not fetch from server");
+          console.log("Could not fetch from server");
+        }
+      } else {
+        console.log("Cached data found, using that...");
+        setMenuItems(JSON.parse(cachedData));
+      }
+    } catch (error) {
+      console.error('Error fetching menu data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (menuItems && menuItems.result) {
+      setCategories(getUniqueCategories(menuItems));
+    }
+  }, [menuItems]);
 
   const [selectedItem, setSelectedItem] = useState(null);
   const { addToCart } = useCartStore();
-  const categoryRefs = useRef(categories.reduce((acc, category) => {
-    acc[category] = React.createRef();
-    return acc;
-  }, {}));
+  const categoryRefs = useRef({});
+
+  useEffect(() => {
+    categoryRefs.current = categories.reduce((acc, category) => {
+      acc[category] = React.createRef();
+      return acc;
+    }, {});
+  }, [categories]);
 
   const handleCategoryClick = (category) => {
     const headerHeight = 180;
@@ -40,7 +73,29 @@ export default function Home() {
     });
   };
 
-  const getCategoryItems = (category) => menuItems.filter((item) => item.category === category);
+  const getCategoryItems = (category) => {
+    if (!menuItems || !menuItems.result) return [];
+    
+    return menuItems.result
+      .filter((item) => item.category === category)
+      .map(item => ({
+        id: item.menu_item_id,
+        name: item.menu_item_name,
+        price: item.price,
+        image: item.menu_item_image || '/placeholder-image.jpg',
+        description: item.description,
+        category: item.category
+      }));
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Add this console.log for debugging
+  useEffect(() => {
+    console.log("Current menuItems:", menuItems);
+  }, [menuItems]);
 
   return (
     <div suppressHydrationWarning>
