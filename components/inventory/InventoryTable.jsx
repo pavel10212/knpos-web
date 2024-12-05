@@ -8,6 +8,7 @@ const InventoryTable = ({ data, onEdit, onDelete }) => {
           <tr>
             <th className="px-6 py-3">Product ID</th>
             <th className="px-6 py-3">Product</th>
+            <th className="px-6 py-3">Price Per Product</th>
             <th className="px-6 py-3">Category</th>
             <th className="px-6 py-3">Sales Channel</th>
             <th className="px-6 py-3">Stock Level</th>
@@ -17,25 +18,14 @@ const InventoryTable = ({ data, onEdit, onDelete }) => {
         </thead>
         <tbody>
           {data.map((item) => (
-            <tr key={item.id} className="bg-white border-b hover:bg-gray-50">
-              <td className="px-6 py-4 text-black">{item.id}</td>
-              <td className="px-6 py-4 text-black">{item.product}</td>
+            <tr key={item.inventory_item_id} className="bg-white border-b hover:bg-gray-50">
+              <td className="px-6 py-4 text-black">{item.inventory_item_id}</td>
+              <td className="px-6 py-4 text-black">{item.inventory_item_name}</td>
+              <td className="px-6 py-4 text-black">{item.cost_per_unit}</td>
               <td className="px-6 py-4 text-black">{item.category}</td>
-              <td className="px-6 py-4 text-black">{item.channel}</td>
-              <td className="px-6 py-4">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    item.stock <= 50
-                      ? "bg-red-100 text-red-800"
-                      : item.stock <= 100
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-green-100 text-green-800"
-                  }`}
-                >
-                  {item.stock} items
-                </span>
-              </td>
-              <td className="px-6 py-4 text-black">{item.maxCapacity} items</td>
+              <td className="px-6 py-4 text-black">{item.sales_channel}</td>
+              <td className="px-6 py-4 text-black">{item.quantity} {item.unit}</td>
+              <td className="px-6 py-4 text-black">{item.max_quantity} {item.unit}</td>
               <td className="px-6 py-4 flex space-x-3">
                 <button
                   onClick={() => onEdit(item)}
@@ -44,7 +34,7 @@ const InventoryTable = ({ data, onEdit, onDelete }) => {
                   <PencilIcon className="h-5 w-5" />
                 </button>
                 <button
-                  onClick={() => onDelete(item.id)}
+                  onClick={() => onDelete(item.inventory_item_id)}
                   className="text-red-600 hover:text-red-800"
                 >
                   <TrashIcon className="h-5 w-5" />

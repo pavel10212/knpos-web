@@ -60,7 +60,6 @@ const Menu = () => {
 
   const handleAddItem = async (e) => {
     e.preventDefault();
-
     try {
       const menuItemData = {
         menu_item_name: newItem.title,
@@ -79,14 +78,9 @@ const Menu = () => {
       });
 
       if (!response.ok) {
-
         throw new Error('Failed to add item');
       }
-
-
       const addedItem = await response.json();
-
-
 
       console.log(addedItem, "Server Response")
       setMenuItems(prevItems => {

@@ -1,56 +1,59 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import InventoryTable from "@/components/inventory/InventoryTable";
 import AddProductModal from "@/components/inventory/AddProductModal";
 import EditStockModal from "@/components/inventory/EditStockModal";
-const sampleData = [
-  {
-    id: "P001",
-    product: "Coca-Cola",
-    category: "Drinks",
-    channel: "Store Front",
-    stock: 150,
-    maxCapacity: 200,
-  },
-  {
-    id: "P002",
-    product: "Sprite",
-    category: "Drinks",
-    channel: "Vending Machine",
-    stock: 85,
-    maxCapacity: 200,
-  },
-  {
-    id: "P003",
-    product: "Salted Peanuts",
-    category: "Snacks",
-    channel: "Store Front",
-    stock: 200,
-    maxCapacity: 200,
-  },
-  {
-    id: "P004",
-    product: "Mixed Nuts",
-    category: "Snacks",
-    channel: "Vending Machine",
-    stock: 45,
-    maxCapacity: 200,
-  },
-];
 
 const Inventory = () => {
+  const [inventoryItems, setInventoryItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [newProduct, setNewProduct] = useState({
-    id: "",
-    product: "",
-    category: "",
-    channel: "",
-    stock: "",
-    maxCapacity: "",
+    inventory_item_id: '',
+    inventory_item_name: '',
+    quantity: '',
+    unit: '',
+    max_quantity: '',
+    cost_per_unit: '',
+    category: '',
+    sales_channel: ''
   });
   const [editStock, setEditStock] = useState("");
+
+
+  console.log(inventoryItems)
+
+
+
+  const loadData = async () => {
+    try {
+      const cachedData = localStorage.getItem('inventoryData')
+      if (!cachedData) {
+        try {
+          console.log('No cache, fetching from server');
+          const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-get`);
+          const data = await response.json();
+          setInventoryItems(data);
+          localStorage.setItem('inventoryData', JSON.stringify(data));
+        } catch (error) {
+          console.log("Could not fetch from server")
+        }
+      } else {
+        console.log("Cache found, using that")
+        setInventoryItems(JSON.parse(cachedData));
+      }
+    } catch (error) {
+      console.log("Error fetching menu data: ", error);
+    }
+  }
+
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+
 
   const handleDelete = (productId) => {
     console.log("Deleting product:", productId);
@@ -67,10 +70,31 @@ const Inventory = () => {
     setIsEditModalOpen(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("New product:", newProduct);
-    setIsModalOpen(false);
+    try {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-insert`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newProduct)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to insert product');
+      }
+      const addedInventoryItem = await response.json();
+
+      const updatedInventoryItems = [...inventoryItems, ...addedInventoryItem];
+      setInventoryItems(updatedInventoryItems);
+      localStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+
+      setIsModalOpen();
+      return addedInventoryItem;
+    } catch (error) {
+      console.error('Error inserting product:', error);
+    }
   };
 
   const handleEdit = (product) => {
@@ -109,7 +133,7 @@ const Inventory = () => {
       />
 
       <InventoryTable
-        data={sampleData}
+        data={inventoryItems}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

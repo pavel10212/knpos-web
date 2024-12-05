@@ -7,6 +7,37 @@ const AddProductModal = ({
 }) => {
   if (!isOpen) return null;
 
+  const fieldLabels = {
+    'inventory_item_name': 'Product name',
+    'quantity': 'Quantity',
+    'unit': 'Unit(eg. kg, litre)',
+    'max_quantity': 'Max Quantity',
+    'cost_per_unit': 'Cost per unit',
+    'category': 'Category',
+    'sales_channel': 'Sales Channel',
+  };
+
+  const integerOnlyFields = ['quantity', 'max_quantity'];
+  const decimalFields = ['cost_per_unit'];
+
+  const formatFieldName = (field) => {
+    return fieldLabels[field]
+  };
+
+  const getInputType = (field) => {
+    if (integerOnlyFields.includes(field) || decimalFields.includes(field)) {
+      return 'number';
+    }
+    return 'text';
+  };
+
+  const getInputStep = (field) => {
+    if (decimalFields.includes(field)) {
+      return '0.01';
+    }
+    return '1';
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-8 rounded-lg w-full max-w-md shadow-xl">
@@ -16,22 +47,22 @@ const AddProductModal = ({
         <form onSubmit={onSubmit}>
           <div className="space-y-4">
             {[
-              "id",
-              "product",
+              "inventory_item_name",
+              "quantity",
+              "unit",
+              "max_quantity",
+              "cost_per_unit",
               "category",
-              "channel",
-              "stock",
-              "maxCapacity",
+              "sales_channel",
             ].map((field) => (
               <div key={field}>
                 <label className="block text-sm font-medium text-gray-800 mb-1">
-                  {field.charAt(0).toUpperCase() +
-                    field.slice(1).replace(/([A-Z])/g, " $1")}
+                  {formatFieldName(field)}
                 </label>
                 <input
-                  type={
-                    ["stock", "maxCapacity"].includes(field) ? "number" : "text"
-                  }
+                  type={getInputType(field)}
+                  step={getInputStep(field)}
+                  min="0"
                   className="text-black mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   value={newProduct[field]}
                   onChange={(e) =>
