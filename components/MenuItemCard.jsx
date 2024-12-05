@@ -13,10 +13,6 @@ export default function MenuItemCard({ name, price, image, onClick }) {
           height={70}
           src={image} alt={name} className="w-full h-48 object-cover" />
         <div className="absolute top-2 right-2 bg-white bg-opacity-90 px-2 py-1 rounded-full">
-          <div className="flex items-center text-sm">
-            <span className="text-yellow-500 mr-1">★</span>
-            <span className="font-medium">{}</span>
-          </div>
         </div>
       </div>
       <div className="p-4">
