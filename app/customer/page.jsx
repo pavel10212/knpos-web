@@ -28,7 +28,7 @@ export default function Home() {
       if (!cachedData) {
         try {
           console.log("No cached data found, fetching from server...");
-          const response = await fetch("http://44.202.118.242:3000/menu-get");
+          const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`);
           const data = await response.json();
           setMenuItems(data);
           localStorage.setItem('menuData', JSON.stringify(data));
