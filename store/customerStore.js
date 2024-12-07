@@ -44,7 +44,7 @@ export const useCartStore = create((set, get) => ({
     };
 
     try {
-      const response = await fetch("http://44.202.118.242:3000/orders-insert", {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/orders-insert`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

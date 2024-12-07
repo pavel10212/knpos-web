@@ -11,7 +11,7 @@ export default function Orders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch("http://44.202.118.242:3000/orders-get");
+        const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/orders-get`);
         if (!response.ok) {
           throw new Error("Failed to fetch orders");
         }
@@ -29,7 +29,7 @@ export default function Orders() {
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
-        const response = await fetch("http://44.202.118.242:3000/menu-get");
+        const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`);
         if (!response.ok) {
           throw new Error("Failed to fetch menu items");
         }
