@@ -55,20 +55,59 @@ const Inventory = () => {
 
 
 
-  const handleDelete = (productId) => {
+  const handleDelete = async (productId) => {
     console.log("Deleting product:", productId);
+    try {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: productId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
+      }
+
+      const updatedInventoryItems = inventoryItems.filter((item) => item.inventory_item_id !== productId);
+      setInventoryItems(updatedInventoryItems);
+      localStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  }
+
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...editStock,
+          inventory_item_id: selectedProduct.inventory_item_id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update product');
+      }
+
+      const updatedInventoryItems = inventoryItems.map((item) =>
+        item.inventory_item_id === selectedProduct.inventory_item_id ? editStock : item
+      );
+      setInventoryItems(updatedInventoryItems);
+      localStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error('Error updating product:', error);
+    }
   };
 
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    console.log(
-      "Updating stock for product:",
-      selectedProduct.id,
-      "New stock:",
-      editStock
-    );
-    setIsEditModalOpen(false);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -99,7 +138,7 @@ const Inventory = () => {
 
   const handleEdit = (product) => {
     setSelectedProduct(product);
-    setEditStock(product.stock.toString());
+    setEditStock(product);
     setIsEditModalOpen(true);
   };
 
