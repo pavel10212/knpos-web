@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [menuItems, setMenuItems] = useState({});
+  const router = useRouter()
 
-  // Fetch orders from the database
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -25,28 +25,19 @@ export default function Orders() {
     fetchOrders();
   }, []);
 
-  // Fetch menu items to map names and prices
-  useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch menu items");
-        }
-        const data = await response.json();
-        setMenuItems(
-          data.reduce((acc, item) => {
-            acc[item.menu_item_id] = item; // Map menu_item_id to the full menu item
-            return acc;
-          }, {})
-        );
-      } catch (error) {
-        console.error("Error fetching menu items:", error);
-      }
-    };
 
-    fetchMenuItems();
-  }, []);
+  useEffect(() => {
+    const getMenuItems = () => {
+      const cachedItems = localStorage.getItem('menuData')
+      if (!cachedItems) {
+        console.log("No items in cache")
+      } else {
+        setMenuItems(cachedItems)
+      }
+    }
+    getMenuItems()
+  }, [])
+
 
   const handleSettleBill = () => {
     alert("Waiter has been notified and will bring your bill shortly!");
@@ -68,18 +59,18 @@ export default function Orders() {
     <div className="bg-gray-50 min-h-screen pb-32">
       <div className="container mx-auto p-4 max-w-2xl">
         <div className="flex items-center gap-4 mb-6">
-          <Link href="/customer" className="bg-gray-100 text-gray-600 px-4 py-2 rounded-full">
+          <button onClick={() => router.back()} className="bg-gray-100 text-gray-600 px-4 py-2 rounded-full">
             ← Back
-          </Link>
+          </button>
           <h1 className="text-2xl font-bold">Order History</h1>
         </div>
 
         {orders.length === 0 ? (
           <div className="text-center py-8">
             <p className="mb-4">No orders yet</p>
-            <Link href="/customer" className="bg-yellow-500 text-white px-6 py-2 rounded-full">
+            <button onClick={() => router.back()} className="bg-yellow-500 text-white px-6 py-2 rounded-full">
               Go to Menu
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="space-y-4">

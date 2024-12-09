@@ -19,32 +19,32 @@ export default function Cart() {
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col justify-between">
       <div className="container mx-auto p-4 max-w-2xl">
-        <h1 className="text-2xl font-bold mb-4">Your Order</h1>
+        <h1 className="text-2xl text-black font-bold mb-4">Your Order</h1>
         {/* Removed the "First Order" heading */}
 
         {cart.length === 0 ? (
           <div className="text-center py-8">
-            <p className="mb-4">Your cart is empty</p>
-            <Link href="/customer" className="bg-yellow-500 text-white px-6 py-2 rounded-full">
+            <p className="mb-4 text-black">Your cart is empty</p>
+            <button onClick={() => router.back()} className="bg-yellow-500 text-white px-6 py-2 rounded-full">
               Return to Menu
-            </Link>
+            </button>
           </div>
         ) : (
           <>
             {cart.map((item) => (
               <div
-                key={item.id}
+                key={item.menu_item_id}
                 className="flex items-center gap-4 bg-white shadow-sm rounded-lg p-4 mb-4"
               >
                 <Image
                   width={64}
                   height={64}
-                  src={item.image}
-                  alt={item.name}
+                  src={item.menu_item_image || "/images/logo.png"}
+                  alt={item.menu_item_name}
                   className="w-16 h-16 object-cover rounded-lg"
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold">{item.name}</h3>
+                  <h3 className="font-semibold">{item.menu_item_name}</h3>
                   <p className="text-sm text-gray-500 mb-2">⭐ 4.9 (120 reviews)</p>
                   <p className="font-semibold text-yellow-500">
                     {item.price} THB
@@ -52,21 +52,21 @@ export default function Cart() {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <button
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(item.menu_item_id)}
                     className="text-red-500 text-sm"
                   >
                     Delete
                   </button>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => updateQuantity(item.menu_item_id, item.quantity - 1)}
                       className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center"
                     >
                       -
                     </button>
                     <span>{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => updateQuantity(item.menu_item_id, item.quantity + 1)}
                       className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center"
                     >
                       +

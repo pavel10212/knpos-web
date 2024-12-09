@@ -43,7 +43,6 @@ const Menu = () => {
     fetchData();
   }, []);
 
-  console.log(menuItems);
 
   const tabs = getUniqueCategories(menuItems);
   const [activeTab, setActiveTab] = useState("");

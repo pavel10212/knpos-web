@@ -1,5 +1,10 @@
 import { create } from "zustand";
 
+export const useUserStore = create((set) => ({
+  userToken: null,
+  setUserToken: (token) => set({ userToken: token }),
+}));
+
 export const useCartStore = create((set, get) => ({
   cart: [],
   addToCart: (item, quantity = 1) =>
@@ -8,9 +13,7 @@ export const useCartStore = create((set, get) => ({
       return {
         cart: existing
           ? state.cart.map((i) =>
-              i.id === item.id
-                ? { ...i, quantity: i.quantity + quantity }
-                : i
+              i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
             )
           : [...state.cart, { ...item, quantity }],
       };
@@ -21,9 +24,7 @@ export const useCartStore = create((set, get) => ({
     })),
   updateQuantity: (itemId, quantity) =>
     set((state) => ({
-      cart: state.cart.map((i) =>
-        i.id === itemId ? { ...i, quantity } : i
-      ),
+      cart: state.cart.map((i) => (i.id === itemId ? { ...i, quantity } : i)),
     })),
   calculateTotal: () =>
     get().cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
@@ -44,13 +45,16 @@ export const useCartStore = create((set, get) => ({
     };
 
     try {
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/orders-insert`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orderDetails),
-      });
+      const response = await fetch(
+        `http://${process.env.NEXT_PUBLIC_IP}:3000/orders-insert`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderDetails),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to send the order");

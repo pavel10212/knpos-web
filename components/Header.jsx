@@ -2,29 +2,40 @@
 
 import { useCartStore } from "@/store/customerStore";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Header({ categories, onCategoryClick }) {
   const { cart } = useCartStore();
-  const cartItemCount = cart.reduce((sum, i) => sum + i.quantity, 0)
+  const router = useRouter();
+  const [token, setToken] = useState(null);
+  const cartItemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    setToken(storedToken);
+  }, []);
+
+  const basePath = `/customer/${token}`;
+  const ordersPath = `${basePath}/orders`;
+  const cartPath = `${basePath}/cart`;
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-custom">
-      {/* Restaurant Name */}
       <div className="container mx-auto p-4 flex justify-between items-center">
-        <Link href="/" className="transform transition hover:scale-105">
+        <button onClick={() => router.push(basePath)} className="transform text-left transition hover:scale-105">
           <h1 className="text-xl font-bold">
             <span className="block text-primary">Hinkali</span>
             <span className="block text-secondary">Georgian</span>
             <span className="block text-titleColour">Restaurant</span>
           </h1>
-        </Link>
+        </button>
         <div className="flex items-center gap-6">
-          <Link href="/customer/orders" className="text-gray-600 hover:text-primary transition-colors">
+          <button onClick={() => router.push(ordersPath)} className="text-gray-600 hover:text-primary transition-colors">
             Orders
-          </Link>
+          </button>
           <Link
-            href="/customer/cart"
+            href={cartPath}
             className="bg-customYellow text-white px-4 py-2 rounded-full shadow-md 
                      flex items-center gap-2 transform transition-all hover:scale-105 
                      hover:bg-yellow-600"
