@@ -1,6 +1,6 @@
 "use client";
 
-import { useCartStore } from "@/store/customerStore";
+import { useCartStore, useUserStore } from "@/store/customerStore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -16,7 +16,7 @@ export default function Header({ categories, onCategoryClick }) {
     setToken(storedToken);
   }, []);
 
-  const basePath = `/customer/${token}`;
+  const basePath = `/customer/token=${token}`;
   const ordersPath = `${basePath}/orders`;
   const cartPath = `${basePath}/cart`;
 

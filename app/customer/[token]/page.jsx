@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Head from "next/head";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -22,56 +22,59 @@ export default function MenuPage() {
   const [categories, setCategories] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const categoryRefs = useRef({});
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
   const { addToCart } = useCartStore();
+  const params = useParams()
+  const dirtyToken = params.token;
+  const token = dirtyToken.replace('token%3D', '')
+
+  localStorage.setItem('token', token);
 
   const fetchData = async () => {
-    try {
-      if (!token) {
-        alert("No token found. Please scan the QR code again.");
-        console.error("Missing token");
-        return;
-      }
-      localStorage.setItem("token", token);
+    const storedToken = localStorage.getItem('token');
 
-      const cachedData = localStorage.getItem("menuData");
-      if (!cachedData) {
-        console.log("No cached data found, fetching from server...");
+    if (!storedToken) {
+      console.log("No token found in local storage");
+    }
+    const cachedMenuData = localStorage.getItem('menuData');
+
+    if (!cachedMenuData) {
+      console.log("Fetching menu data from the server");
+      try {
         const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${storedToken}`,
           },
         });
 
         if (!response.ok) {
           if (response.status === 401 || response.status === 403) {
             alert("Invalid or expired token. Please scan the QR code again.");
-            localStorage.removeItem("token");
-          } else {
-            throw new Error("Failed to fetch menu");
+            localStorage.removeItem('token');
+            return;
           }
+          throw new Error("Failed to fetch menu");
         }
 
-
         const data = await response.json();
-
-        console.log(data, "Our data")
         setMenuItems(data.menuItems || []);
+        localStorage.setItem('menuData', JSON.stringify(data.menuItems || []));
 
-        localStorage.setItem("menuData", JSON.stringify(data.menuItems || []));
-      } else {
-        console.log("Cached data found, using that...");
-        setMenuItems(JSON.parse(cachedData));
+      } catch (error) {
+        console.error("Error fetching menu data:", error);
+        alert("Error loading menu. Please try again.");
       }
-    } catch (error) {
-      console.error("Error fetching menu data:", error);
+    } else {
+      console.log("Using cached menu data");
+      setMenuItems(JSON.parse(cachedMenuData));
     }
   };
 
   useEffect(() => {
+    if (token) {
+      localStorage.setItem('token', token);
+    }
     fetchData();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (menuItems) {
