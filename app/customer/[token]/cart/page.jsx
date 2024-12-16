@@ -2,17 +2,17 @@
 
 import { useCartStore } from '@/store/customerStore'
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Cart() {
   const { cart, calculateTotal, setCart, saveOrder, removeFromCart, updateQuantity } = useCartStore();
   const router = useRouter();
   const total = calculateTotal();
+  const token = localStorage.getItem('token');
 
   const handleSendOrder = () => {
-    saveOrder(cart, total);
-    router.push(`/customer/order-confirmation?total=${total}`);
+    saveOrder(cart, total, token);
+    router.push(`/customer/${token}/order-confirmation?total=${total}`);
     setCart([]);
   };
 

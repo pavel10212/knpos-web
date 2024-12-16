@@ -1,17 +1,18 @@
 "use client";
 
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/customerStore';
 
 
 export default function OrderConfirmation() {
+  const router = useRouter()
   const searchParams = useSearchParams();
   const { cart } = useCartStore();
   const total = parseFloat(searchParams.get('total') || '0');
-  const VAT = total * 0.20; // 20% VAT
+  const VAT = 0;
   const totalWithVAT = total + VAT;
-  const orderNumber = cart.length; // Get the current order number
+  const orderNumber = cart.length;
 
   return (
     <div className="bg-gray-50 min-h-screen p-4">
@@ -38,11 +39,11 @@ export default function OrderConfirmation() {
             </div>
           </div>
 
-          <Link href="/customer" className="block text-center mt-6">
-            <button className="bg-yellow-500 text-white px-6 py-2 rounded-full">
+          <div className="block text-center mt-6">
+            <button onClick={() => router.back()} className="bg-yellow-500 text-white px-6 py-2 rounded-full">
               Return to Menu
             </button>
-          </Link>
+          </div>
         </div>
       </div>
     </div>
