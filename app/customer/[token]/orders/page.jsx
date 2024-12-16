@@ -2,19 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUserStore } from "@/store/customerStore";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [menuItems, setMenuItems] = useState({});
-  const router = useRouter()
+  const router = useRouter();
+  const table_num = localStorage.getItem('table_num');
+  const { userToken } = useUserStore();
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/orders-get`);
+        const response = await fetch(
+          `http://${process.env.NEXT_PUBLIC_IP}:3000/orders-for-table?table_num=${table_num}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${userToken}`,
+            },
+          }
+        );
+
         if (!response.ok) {
-          throw new Error("Failed to fetch orders");
+          throw new Error(`Failed to fetch orders: ${response.statusText}`);
         }
+
         const data = await response.json();
         setOrders(data);
       } catch (error) {
@@ -22,9 +34,10 @@ export default function Orders() {
       }
     };
 
-    fetchOrders();
-  }, []);
-
+    if (userToken && table_num) {
+      fetchOrders();
+    }
+  }, [userToken, table_num]);
 
   useEffect(() => {
     const getMenuItems = () => {

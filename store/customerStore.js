@@ -9,7 +9,7 @@ const fetchTableNumber = async (token) => {
       `http://${process.env.NEXT_PUBLIC_IP}:3000/find-table?token=${token}`
     );
     if (!response.ok) throw new Error("Failed to fetch table number");
-    
+
     const data = await response.json();
     const tableNum = data[0].table_num;
     localStorage.setItem("table_num", tableNum);
@@ -52,10 +52,15 @@ export const useCartStore = create((set, get) => ({
   calculateTotal: () =>
     get().cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
 
+  orders: [],
+  setOrders: (orders) => set({ orders }),
+  addOrder: (order) => set((state) => ({ 
+    orders: [...state.orders, order] 
+  })),
   saveOrder: async (cart, total, token) => {
     try {
       const tableNum = await fetchTableNumber(token);
-      
+
       const orderDetails = {
         table_num: tableNum,
         order_status: "Pending",
@@ -86,7 +91,12 @@ export const useCartStore = create((set, get) => ({
         throw new Error(`Failed to send order: ${response.statusText}`);
       }
 
-      return await response.json();
+      const savedOrder = await response.json();
+      set((state) => ({ 
+        orders: [...state.orders, savedOrder[0]],
+      }));
+      
+      return savedOrder;
     } catch (error) {
       console.error("Error saving order:", error);
       throw error;
