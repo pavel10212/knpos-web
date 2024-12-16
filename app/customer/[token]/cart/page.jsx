@@ -76,12 +76,13 @@ export default function Cart() {
               </div>
             ))}
 
-            <Link
-              href="/customer/"
+            <button
+              onClick={() => router.back()}
+
               className="text-yellow-500 text-center block mt-4 mb-6 font-medium"
             >
               + Add more food to order
-            </Link>
+            </button>
 
             <div className="text-right">
               <p className="text-lg font-bold">Total: {total.toFixed(2)} THB</p>

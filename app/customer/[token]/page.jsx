@@ -48,7 +48,6 @@ export default function MenuPage() {
 
         if (!response.ok) {
           if (response.status === 401 || response.status === 403) {
-            alert("Invalid or expired token. Please scan the QR code again.");
             localStorage.removeItem('token');
             return;
           }
@@ -61,7 +60,6 @@ export default function MenuPage() {
 
       } catch (error) {
         console.error("Error fetching menu data:", error);
-        alert("Error loading menu. Please try again.");
       }
     } else {
       console.log("Using cached menu data");
