@@ -8,7 +8,7 @@ export default function Cart() {
   const { cart, calculateTotal, setCart, saveOrder, removeFromCart, updateQuantity } = useCartStore();
   const router = useRouter();
   const total = calculateTotal();
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
 
   const handleSendOrder = () => {
     saveOrder(cart, total, token);

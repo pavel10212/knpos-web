@@ -12,7 +12,7 @@ export default function Header({ categories, onCategoryClick }) {
   const cartItemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
+    const storedToken = sessionStorage.getItem("token");
     setToken(storedToken);
   }, []);
 

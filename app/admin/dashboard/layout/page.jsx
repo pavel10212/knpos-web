@@ -27,7 +27,7 @@ const Layout = () => {
   }
   const loadTables = async () => {
     try {
-      const cachedLayout = localStorage.getItem('tableLayout')
+      const cachedLayout = sessionStorage.getItem('tableLayout')
       if (cachedLayout) {
         const parsedLayout = JSON.parse(cachedLayout)
         const formattedTables = formatTables(parsedLayout)
@@ -44,7 +44,7 @@ const Layout = () => {
         setTables(formattedTables)
 
 
-        localStorage.setItem('tableLayout', JSON.stringify(data));
+        sessionStorage.setItem('tableLayout', JSON.stringify(data));
       }
     } catch (error) {
       console.log('Error loading tables:', error);
@@ -86,7 +86,7 @@ const Layout = () => {
         throw new Error(error.details || "Failed to save tables");
       }
 
-      localStorage.setItem('tableLayout', JSON.stringify(tablesToSave))
+      sessionStorage.setItem('tableLayout', JSON.stringify(tablesToSave))
 
       console.log("Tables saved successfully");
     } catch (error) {

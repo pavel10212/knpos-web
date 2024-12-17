@@ -18,14 +18,14 @@ const Menu = () => {
 
   const fetchData = async () => {
     try {
-      const cachedData = localStorage.getItem('menuData');
+      const cachedData = sessionStorage.getItem('menuData');
       if (!cachedData) {
         try {
           console.log("No cached data found, fetching from server...");
           const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`);
           const data = await response.json();
           setMenuItems(data);
-          localStorage.setItem('menuData', JSON.stringify(data));
+          sessionStorage.setItem('menuData', JSON.stringify(data));
         } catch (error) {
           alert("Could not fetch from server")
           console.log("Could not fetch from server")
@@ -87,7 +87,7 @@ const Menu = () => {
           ...prevItems, addedItem
         };
 
-        localStorage.setItem('menuData', JSON.stringify(newState));
+        sessionStorage.setItem('menuData', JSON.stringify(newState));
         return newState;
       });
 

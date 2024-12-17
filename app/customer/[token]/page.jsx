@@ -27,15 +27,15 @@ export default function MenuPage() {
   const dirtyToken = params.token;
   const token = dirtyToken.replace('token%3D', '')
 
-  localStorage.setItem('token', token);
+  sessionStorage.setItem('token', token);
 
   const fetchData = async () => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = sessionStorage.getItem('token');
 
     if (!storedToken) {
       console.log("No token found in local storage");
     }
-    const cachedMenuData = localStorage.getItem('menuData');
+    const cachedMenuData = sessionStorage.getItem('menuData');
 
     if (!cachedMenuData) {
       console.log("Fetching menu data from the server");
@@ -48,7 +48,7 @@ export default function MenuPage() {
 
         if (!response.ok) {
           if (response.status === 401 || response.status === 403) {
-            localStorage.removeItem('token');
+            sessionStorage.removeItem('token');
             return;
           }
           throw new Error("Failed to fetch menu");
@@ -56,7 +56,7 @@ export default function MenuPage() {
 
         const data = await response.json();
         setMenuItems(data.menuItems || []);
-        localStorage.setItem('menuData', JSON.stringify(data.menuItems || []));
+        sessionStorage.setItem('menuData', JSON.stringify(data.menuItems || []));
 
       } catch (error) {
         console.error("Error fetching menu data:", error);
@@ -69,7 +69,7 @@ export default function MenuPage() {
 
   useEffect(() => {
     if (token) {
-      localStorage.setItem('token', token);
+      sessionStorage.setItem('token', token);
     }
     fetchData();
   }, [token]);

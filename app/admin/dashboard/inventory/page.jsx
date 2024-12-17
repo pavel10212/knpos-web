@@ -28,14 +28,14 @@ const Inventory = () => {
 
   const loadData = async () => {
     try {
-      const cachedData = localStorage.getItem('inventoryData')
+      const cachedData = sessionStorage.getItem('inventoryData')
       if (!cachedData) {
         try {
           console.log('No cache, fetching from server');
           const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-get`);
           const data = await response.json();
           setInventoryItems(data);
-          localStorage.setItem('inventoryData', JSON.stringify(data));
+          sessionStorage.setItem('inventoryData', JSON.stringify(data));
         } catch (error) {
           console.log("Could not fetch from server")
         }
@@ -72,7 +72,7 @@ const Inventory = () => {
 
       const updatedInventoryItems = inventoryItems.filter((item) => item.inventory_item_id !== productId);
       setInventoryItems(updatedInventoryItems);
-      localStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+      sessionStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
     } catch (error) {
       console.error('Error deleting product:', error);
     }
@@ -101,7 +101,7 @@ const Inventory = () => {
         item.inventory_item_id === selectedProduct.inventory_item_id ? editStock : item
       );
       setInventoryItems(updatedInventoryItems);
-      localStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+      sessionStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
       setIsEditModalOpen(false);
     } catch (error) {
       console.error('Error updating product:', error);
@@ -127,7 +127,7 @@ const Inventory = () => {
 
       const updatedInventoryItems = [...inventoryItems, ...addedInventoryItem];
       setInventoryItems(updatedInventoryItems);
-      localStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+      sessionStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
 
       setIsModalOpen();
       return addedInventoryItem;

@@ -8,7 +8,7 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [menuItems, setMenuItems] = useState({});
   const router = useRouter();
-  const table_num = localStorage.getItem('table_num');
+  const table_num = sessionStorage.getItem('table_num');
   const { userToken } = useUserStore();
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function Orders() {
 
   useEffect(() => {
     const getMenuItems = () => {
-      const cachedItems = localStorage.getItem('menuData')
+      const cachedItems = sessionStorage.getItem('menuData')
       if (!cachedItems) {
         console.log("No items in cache")
       } else {

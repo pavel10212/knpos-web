@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 const fetchTableNumber = async (token) => {
-  const cachedTableNum = localStorage.getItem("table_num");
+  const cachedTableNum = sessionStorage.getItem("table_num");
   if (cachedTableNum) return cachedTableNum;
 
   try {
@@ -12,7 +12,7 @@ const fetchTableNumber = async (token) => {
 
     const data = await response.json();
     const tableNum = data[0].table_num;
-    localStorage.setItem("table_num", tableNum);
+    sessionStorage.setItem("table_num", tableNum);
     return tableNum;
   } catch (error) {
     console.error("Error fetching table number:", error);
