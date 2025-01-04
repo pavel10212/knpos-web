@@ -62,7 +62,7 @@ export const useCartStore = create((set, get) => ({
       const tableNum = await fetchTableNumber(token);
 
       const orderDetails = {
-        table_num: tableNum,
+        table_num: tableNum.toString(),
         order_status: "Pending",
         total_amount: total,
         order_date_time: new Date().toISOString(),

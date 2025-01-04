@@ -3,14 +3,21 @@
 import { useCartStore } from '@/store/customerStore'
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from 'react';
 
 export default function Cart() {
   const { cart, calculateTotal, setCart, saveOrder, removeFromCart, updateQuantity } = useCartStore();
   const router = useRouter();
   const total = calculateTotal();
-  const token = sessionStorage.getItem('token');
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    const storedToken = sessionStorage.getItem('token');
+    setToken(storedToken);
+  }, []); 
 
   const handleSendOrder = () => {
+    if (!token) return;
     saveOrder(cart, total, token);
     router.push(`/customer/${token}/order-confirmation?total=${total}`);
     setCart([]);
