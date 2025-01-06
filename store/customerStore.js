@@ -54,9 +54,10 @@ export const useCartStore = create((set, get) => ({
 
   orders: [],
   setOrders: (orders) => set({ orders }),
-  addOrder: (order) => set((state) => ({ 
-    orders: [...state.orders, order] 
-  })),
+  addOrder: (order) =>
+    set((state) => ({
+      orders: [...state.orders, order],
+    })),
   saveOrder: async (cart, total, token) => {
     try {
       const tableNum = await fetchTableNumber(token);
@@ -67,13 +68,15 @@ export const useCartStore = create((set, get) => ({
         total_amount: total,
         order_date_time: new Date().toISOString(),
         completion_date_time: null,
-        order_details: {
-          items: cart.map(({ id: menu_item_id, quantity }) => ({
-            menu_item_id,
-            quantity,
-          })),
-        },
+        order_details: JSON.stringify(
+          cart.map((item) => ({
+            menu_item_id: item.menu_item_id,
+            quantity: item.quantity,
+          }))
+        ),
       };
+
+      console.log("orderDetails:", orderDetails);
 
       const response = await fetch(
         `http://${process.env.NEXT_PUBLIC_IP}:3000/orders-insert`,
@@ -92,10 +95,10 @@ export const useCartStore = create((set, get) => ({
       }
 
       const savedOrder = await response.json();
-      set((state) => ({ 
+      set((state) => ({
         orders: [...state.orders, savedOrder[0]],
       }));
-      
+
       return savedOrder;
     } catch (error) {
       console.error("Error saving order:", error);
