@@ -1,11 +1,14 @@
 const CategoryTabs = ({ tabs, activeTab, setActiveTab }) => {
   return (
-    <div className="flex space-x-4 mb-6">
-      {tabs.map((tab, index) => (
+    <div className="flex items-center">
+      {tabs.map((tab) => (
         <button
-          key={index}
-          className={`${activeTab === tab ? "bg-blue-500" : "bg-blue-300"
-            } text-white py-2 px-4 rounded-md shadow-md focus:outline-none`}
+          key={tab}
+          className={`px-4 py-2 ${
+            activeTab === tab
+              ? "bg-blue-500 text-white"
+              : "bg-gray-300 text-gray-800 hover:bg-gray-200"
+          } rounded-lg mr-2 last:mr-0 transition-colors duration-200`}
           onClick={() => setActiveTab(tab)}
         >
           {tab}

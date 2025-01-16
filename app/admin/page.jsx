@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import PinField from "react-pin-field";
 import Image from "next/image";
@@ -10,13 +10,31 @@ const Page = () => {
   const router = useRouter();
   const pinRef = useRef();
   const [pinValue, setPinValue] = useState("");
+  const [loading, setLoading] = useState(true);
   const { setIsAdmin, isAdmin } = useAdminStore();
 
   useEffect(() => {
-    if (isAdmin) {
-      router.push('/admin/dashboard')
+    // Only redirect to dashboard if we're on the admin login page
+    if (isAdmin && window.location.pathname === "/admin") {
+      router.push("/admin/dashboard");
     }
+    setLoading(false);
   }, [isAdmin, router]);
+
+  useEffect(() => {
+    if (pinValue === "1234") {
+      setIsAdmin();
+      router.push("/admin/dashboard");
+    }
+  }, [pinValue, setIsAdmin, router]);
+
+  if (loading) {
+    return (
+      <div className="bg-white text-black min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen grid grid-cols-2">
@@ -43,12 +61,6 @@ const Page = () => {
               onChange={(pinCode) => setPinValue(pinCode)}
               validate="0123456789"
               length={4}
-              onComplete={() => {
-                if (pinValue === '1234') {
-                  setIsAdmin()
-                  router.push('/admin/dashboard')
-                }
-              }}
               className="w-12 text-gray-400 h-11 border-2 border-gray-300 rounded-lg mx-1 text-center text-xl font-semibold focus:border-purple-500 focus:outline-none transition-colors"
             />
           </div>

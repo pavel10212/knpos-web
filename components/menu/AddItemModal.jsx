@@ -1,4 +1,11 @@
-const AddItemModal = ({ isOpen, onClose, onSubmit, newItem, setNewItem, activeTab }) => {
+const AddItemModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  newItem,
+  setNewItem,
+  activeTab,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -38,12 +45,9 @@ const AddItemModal = ({ isOpen, onClose, onSubmit, newItem, setNewItem, activeTa
               </label>
               <input
                 type="text"
-                className="text-black mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                value={newItem.category || (activeTab !== "All" ? activeTab : "")}
-                onChange={(e) =>
-                  setNewItem({ ...newItem, category: e.target.value })
-                }
-                required
+                className="text-black mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 bg-gray-100"
+                value={activeTab}
+                disabled
               />
             </div>
             <div>
