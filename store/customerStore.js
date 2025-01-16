@@ -36,8 +36,8 @@ export const useCartStore = create((set, get) => ({
       return {
         cart: existing
           ? state.cart.map((i) =>
-              i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
-            )
+            i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
+          )
           : [...state.cart, { ...item, quantity }],
       };
     }),
@@ -71,6 +71,7 @@ export const useCartStore = create((set, get) => ({
         order_details: JSON.stringify(
           cart.map((item) => ({
             menu_item_id: item.menu_item_id,
+            status: 'pending',
             quantity: item.quantity,
           }))
         ),
@@ -84,7 +85,6 @@ export const useCartStore = create((set, get) => ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(orderDetails),
         }
