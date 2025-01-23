@@ -5,12 +5,13 @@ import { useState } from "react";
 
 export default function MenuItemModal({ item, onClose, onAddToCart }) {
   const [quantity, setQuantity] = useState(1);
+  const [request, setRequest] = useState("");
 
   const increaseQuantity = () => setQuantity(quantity + 1);
   const decreaseQuantity = () => setQuantity(quantity > 1 ? quantity - 1 : 1);
 
   const handleAddToCart = () => {
-    onAddToCart(item, quantity);
+    onAddToCart(item, quantity, request);
     onClose();
   };
 
@@ -43,6 +44,8 @@ export default function MenuItemModal({ item, onClose, onAddToCart }) {
 
         {/* Add a Request */}
         <textarea
+          value={request}
+          onChange={(e) => setRequest(e.target.value)}
           placeholder="Add a request (e.g., No onions)"
           maxLength={250}
           className="w-full border border-gray-300 rounded-lg p-2 mb-4"

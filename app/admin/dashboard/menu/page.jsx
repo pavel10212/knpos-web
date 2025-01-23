@@ -204,7 +204,7 @@ const Menu = () => {
               type="text"
               className="w-full p-2 border rounded mb-4"
               placeholder="Category Name"
-              // Add necessary handlers
+            // Add necessary handlers
             />
             <div className="flex justify-end gap-2">
               <button

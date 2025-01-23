@@ -28,17 +28,17 @@ export const useUserStore = create((set) => ({
 export const useCartStore = create((set, get) => ({
   cart: [],
   setCart: (cart) => set({ cart }),
-  addToCart: (item, quantity = 1) =>
+  addToCart: (item, quantity = 1, request) =>
     set((state) => {
       const existing = state.cart.find(
-        (i) => i.menu_item_id === item.menu_item_id
+        (i) => i.menu_item_id === item.menu_item_id && i.request === request
       );
       return {
         cart: existing
           ? state.cart.map((i) =>
             i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
           )
-          : [...state.cart, { ...item, quantity }],
+          : [...state.cart, { ...item, quantity, request }],
       };
     }),
   removeFromCart: (itemId) =>
@@ -73,6 +73,7 @@ export const useCartStore = create((set, get) => ({
             menu_item_id: item.menu_item_id,
             status: 'pending',
             quantity: item.quantity,
+            request: item.request,
           }))
         ),
       };
@@ -85,6 +86,7 @@ export const useCartStore = create((set, get) => ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify(orderDetails),
         }
