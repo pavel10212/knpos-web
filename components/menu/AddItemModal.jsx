@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+
 const AddItemModal = ({
   isOpen,
   onClose,
@@ -5,6 +7,7 @@ const AddItemModal = ({
   newItem,
   setNewItem,
   activeTab,
+  progress // Add this prop
 }) => {
   if (!isOpen) return null;
 
@@ -22,8 +25,22 @@ const AddItemModal = ({
                 type="file"
                 name="image"
                 accept="image/*"
+                onChange={(e) => setNewItem({ ...newItem, image: e.target.files[0] })}
                 className="text-black mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
+              {progress > 0 && (
+                <div className="mt-2">
+                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-blue-500"
+                      style={{ width: progress * 100 + '%' }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Upload progress: {Math.round(progress * 100)}%
+                  </p>
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-1">

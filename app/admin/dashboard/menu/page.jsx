@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useMotionValue } from "framer-motion";
 import CategoryTabs from "@/components/menu/CategoryTabs";
 import MenuCard from "@/components/menu/MenuCard";
 import AddItemModal from "@/components/menu/AddItemModal";
+import { S3 } from "@aws-sdk/client-s3";
 
 const getUniqueCategories = (menuItems) => {
   const allCategories = Object.values(menuItems)
@@ -15,6 +17,15 @@ const getUniqueCategories = (menuItems) => {
 
 const Menu = () => {
   const [menuItems, setMenuItems] = useState({});
+  const [file, setFile] = useState(null);
+  const [upload, setUpload] = useState(null);
+  const progress = useMotionValue(0);
+
+  const s3 = new S3({
+    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
+    region: process.env.NEXT_PUBLIC_AWS_REGION,
+  });
 
   const fetchData = async () => {
     try {
@@ -46,6 +57,42 @@ const Menu = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    return upload?.abort();
+  }, []);
+
+  useEffect(() => {
+    progress.set(0);
+    setUpload(null);
+  }, [file]);
+
+  const handleFileChange = (e) => {
+    e.preventDefault();
+    setFile(e.target.files[0]);
+  };
+
+  const handleUpload = async (file) => {
+    if (!file) return null;
+    const params = {
+      Bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME,
+      Key: `menu-items/${Date.now()}-${file.name}`,
+      Body: file,
+    };
+
+    try {
+      const upload = s3.upload(params);
+      setUpload(upload);
+      upload.on('httpUploadProgress', (p) => {
+        progress.set(p.loaded / p.total);
+      });
+      const result = await upload.promise();
+      return result.Location;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  };
+
   const tabs = getUniqueCategories(menuItems);
   const [activeTab, setActiveTab] = useState("All");
 
@@ -62,13 +109,16 @@ const Menu = () => {
   const handleAddItem = async (e) => {
     e.preventDefault();
     try {
+      const imageUrl = await handleUpload(file);
+
       const menuItemData = {
         menu_item_name: newItem.title,
         price: newItem.price,
         description: newItem.description,
         category: newItem.category,
-        menu_item_image: null, // TODO: Implement proper image handling later
+        menu_item_image: imageUrl,
       };
+      console.log(menuItemData, "menu item data");
 
       const response = await fetch(
         `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-insert`,
@@ -105,12 +155,13 @@ const Menu = () => {
         category: "",
       });
       setIsAddItemModalOpen(false);
+
+      // Reset file state after successful upload
+      setFile(null);
     } catch (error) {
       console.error("Error adding menu item:", error);
     }
   };
-
-  console.log(menuItems, "menuitems");
 
   const handleDeleteItem = (itemId) => {
     setMenuItems((prev) => ({
@@ -193,6 +244,7 @@ const Menu = () => {
         newItem={newItem}
         setNewItem={setNewItem}
         activeTab={activeTab}
+        progress={progress}
       />
 
       {/* Add New Category Modal */}
