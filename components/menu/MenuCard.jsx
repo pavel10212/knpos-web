@@ -2,15 +2,22 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 
 const MenuCard = ({ item, onDelete }) => {
+  console.log(item);
   return (
     <div className="bg-white border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all">
-      <Image
-        width={40}
-        height={40}
-        src={item.menu_item_image || '/placeholder-image.jpg'}
-        alt={item.menu_item_name}
-        className="w-full h-48 object-cover"
-      />
+      <div className="relative h-48">
+        {item.menu_item_image ? (
+          <img
+            src={item.menu_item_image}
+            alt={item.menu_item_name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-400">No image</span>
+          </div>
+        )}
+      </div>
       <div className="p-4">
         <h2 className="text-lg font-semibold text-gray-900">{item.menu_item_name}</h2>
         <p className="text-gray-600 text-sm mt-1 mb-2">{item.description}</p>

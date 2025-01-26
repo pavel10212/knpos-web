@@ -6,6 +6,7 @@ import CategoryTabs from "@/components/menu/CategoryTabs";
 import MenuCard from "@/components/menu/MenuCard";
 import AddItemModal from "@/components/menu/AddItemModal";
 import { S3 } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 
 const getUniqueCategories = (menuItems) => {
   const allCategories = Object.values(menuItems)
@@ -21,35 +22,58 @@ const Menu = () => {
   const [upload, setUpload] = useState(null);
   const progress = useMotionValue(0);
 
-  const s3 = new S3({
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
-    region: process.env.NEXT_PUBLIC_AWS_REGION,
-  });
+  const verifyAwsConfig = () => {
+    const config = {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
+      region: process.env.NEXT_PUBLIC_AWS_REGION,
+      bucketName: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME
+    };
+
+    const missingVars = Object.entries(config)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingVars.length > 0) {
+      console.error('Missing AWS configuration:', missingVars);
+      throw new Error(`Missing AWS configuration: ${missingVars.join(', ')}`);
+    }
+
+    return config;
+  };
 
   const fetchData = async () => {
     try {
       const cachedData = sessionStorage.getItem("menuData");
       if (!cachedData) {
-        try {
-          console.log("No cached data found, fetching from server...");
-          const response = await fetch(
-            `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`
-          );
-          const data = await response.json();
-          setMenuItems(data);
-          sessionStorage.setItem("menuData", JSON.stringify(data));
-        } catch (error) {
-          alert("Could not fetch from server");
-          console.log("Could not fetch from server");
-        }
+        const response = await fetch(
+          `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`
+        );
+        const data = await response.json();
+        
+        // Get just the menuItems array from the response
+        const items = data.menuItems || [];
+
+        // Group items by category
+        const groupedData = items.reduce((acc, item) => {
+          const category = item.category || 'Uncategorized';
+          if (!acc[category]) {
+            acc[category] = [];
+          }
+          // Add item without modifying the image URL
+          acc[category].push(item);
+          return acc;
+        }, {});
+
+        console.log('Grouped menu data:', groupedData);
+        setMenuItems(groupedData);
+        sessionStorage.setItem("menuData", JSON.stringify(groupedData));
       } else {
-        console.log("Cached data found, using that...");
-        console.log(cachedData, "my cache");
         setMenuItems(JSON.parse(cachedData));
       }
     } catch (error) {
       console.error("Error fetching menu data:", error);
+      setMenuItems({});
     }
   };
 
@@ -72,23 +96,43 @@ const Menu = () => {
   };
 
   const handleUpload = async (file) => {
-    if (!file) return null;
-    const params = {
-      Bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME,
-      Key: `menu-items/${Date.now()}-${file.name}`,
-      Body: file,
-    };
+    if (!file) {
+      console.error('No file provided for upload');
+      return null;
+    }
 
     try {
-      const upload = s3.upload(params);
-      setUpload(upload);
-      upload.on('httpUploadProgress', (p) => {
+      const config = verifyAwsConfig();
+      
+      const s3Client = new S3({
+        credentials: {
+          accessKeyId: config.accessKeyId,
+          secretAccessKey: config.secretAccessKey,
+        },
+        region: config.region
+      });
+
+      const upload = new Upload({
+        client: s3Client,
+        params: {
+          Bucket: config.bucketName,
+          Key: `menu-items/${Date.now()}-${file.name}`,
+          Body: file,
+          ContentType: file.type,
+        }
+      });
+
+      upload.on("httpUploadProgress", (p) => {
+        console.log('Upload progress:', Math.round((p.loaded / p.total) * 100));
         progress.set(p.loaded / p.total);
       });
-      const result = await upload.promise();
+
+      const result = await upload.done();
+      console.log('Upload successful:', result.Location);
       return result.Location;
     } catch (err) {
-      console.error(err);
+      console.error('Upload error:', err);
+      alert(`Failed to upload image: ${err.message}`);
       return null;
     }
   };
@@ -108,18 +152,27 @@ const Menu = () => {
 
   const handleAddItem = async (e) => {
     e.preventDefault();
+    
     try {
-      const imageUrl = await handleUpload(file);
+      if (!newItem.image) {
+        alert('Please select an image');
+        return;
+      }
 
+      const imageUrl = await handleUpload(newItem.image);
+      if (!imageUrl) {
+        throw new Error('Failed to upload image');
+      }
+
+      // Ensure we're sending a plain URL string
       const menuItemData = {
         menu_item_name: newItem.title,
         price: newItem.price,
         description: newItem.description,
-        category: newItem.category,
-        menu_item_image: imageUrl,
+        category: newItem.category || activeTab,
+        menu_item_image: imageUrl.toString() // Ensure it's a string
       };
-      console.log(menuItemData, "menu item data");
-
+console.log('Sending data:', menuItemData); // Debug log
       const response = await fetch(
         `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-insert`,
         {
@@ -134,19 +187,38 @@ const Menu = () => {
       if (!response.ok) {
         throw new Error("Failed to add item");
       }
-      const addedItem = await response.json();
+      
+      const [addedItem] = await response.json(); // Destructure first item from array
+      console.log('Received response:', addedItem); // Debug log
 
-      console.log(addedItem, "Server Response");
+      // Update the menuItems state properly
       setMenuItems((prevItems) => {
-        const newState = {
-          ...prevItems,
-          addedItem,
+        const category = menuItemData.category;
+        const newState = { ...prevItems };
+        
+        if (!newState[category]) {
+          newState[category] = [];
+        }
+
+        // Make sure we're storing the plain URL
+        const newItemEntry = {
+          id: addedItem.menu_item_id, // Change this line
+          menu_item_id: addedItem.menu_item_id,
+          menu_item_name: menuItemData.menu_item_name,
+          menu_item_image: menuItemData.menu_item_image, // Store the plain URL
+          description: menuItemData.description,
+          price: menuItemData.price,
+          category: menuItemData.category,
         };
 
+        newState[category] = [...(newState[category] || []), newItemEntry];
+        
+        // Store in session storage
         sessionStorage.setItem("menuData", JSON.stringify(newState));
         return newState;
       });
 
+      // Reset form
       setNewItem({
         title: "",
         price: "",
@@ -155,19 +227,44 @@ const Menu = () => {
         category: "",
       });
       setIsAddItemModalOpen(false);
-
-      // Reset file state after successful upload
       setFile(null);
+
     } catch (error) {
       console.error("Error adding menu item:", error);
     }
   };
 
-  const handleDeleteItem = (itemId) => {
-    setMenuItems((prev) => ({
-      ...prev,
-      [activeTab]: prev[activeTab].filter((item) => item.id !== itemId),
-    }));
+  const handleDeleteItem = async (itemId) => {
+    try {
+      const response = await fetch(
+        `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-delete/${itemId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete item');
+      }
+
+      // Update the state to remove the deleted item
+      setMenuItems((prevItems) => {
+        const newState = { ...prevItems };
+        // Remove item from all categories
+        Object.keys(newState).forEach((category) => {
+          newState[category] = newState[category].filter(
+            (item) => item.menu_item_id !== itemId
+          );
+        });
+        
+        // Update session storage
+        sessionStorage.setItem("menuData", JSON.stringify(newState));
+        return newState;
+      });
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('Failed to delete item');
+    }
   };
 
   const currentItems = Object.values(menuItems)
@@ -176,66 +273,127 @@ const Menu = () => {
       (item) => activeTab === "All" || !activeTab || item.category === activeTab
     );
 
-  const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
+  const isEmpty = !currentItems || currentItems.length === 0;
 
-  // Add this new handler
-  const handleAddCategory = async (categoryName) => {
-    // TODO: Implement category addition logic
-    console.log("Adding new category:", categoryName);
+  const handleFirstItemAdd = () => {
+    // Open add item modal directly instead of category modal
+    setNewItem({
+      title: "",
+      price: "",
+      description: "",
+      image: "",
+      category: "" // Allow user to enter category directly
+    });
+    setIsAddItemModalOpen(true);
   };
+
+  // Add new category functionality
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      alert('Please enter a category name');
+      return;
+    }
+
+    try {
+      // Add category to database
+      const response = await fetch(
+        `http://${process.env.NEXT_PUBLIC_IP}:3000/category-insert`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ category_name: newCategoryName }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to add category");
+      }
+
+      setActiveTab(newCategoryName);
+      setIsNewCategoryModalOpen(false);
+      setIsAddItemModalOpen(true); // Open add item modal after category is created
+      setNewItem(prev => ({
+        ...prev,
+        category: newCategoryName
+      }));
+    } catch (error) {
+      console.error("Error adding category:", error);
+      alert("Failed to add category");
+    }
+  };
+
+  const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Menu</h1>
 
-      <div className="flex items-center space-x-2 mb-6">
-        <div className="flex-grow flex items-center">
-          <CategoryTabs
-            tabs={tabs}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-          />
-        </div>
-        <button
-          onClick={() => setIsNewCategoryModalOpen(true)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center"
-        >
-          <span className="mr-2">+</span> New Category
-        </button>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4">
-        {activeTab !== "All" && (
-          <div
-            className="flex items-center justify-center border-2 border-dashed border-gray-400 rounded-lg h-72 hover:bg-gray-100 cursor-pointer bg-gray-50"
-            onClick={() => {
-              setNewItem((prev) => ({
-                ...prev,
-                category: activeTab,
-              }));
-              setIsAddItemModalOpen(true);
-            }}
+      {isEmpty ? (
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <p className="text-gray-500 mb-4">Your menu is empty</p>
+          <button
+            onClick={handleFirstItemAdd}
+            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2"
           >
-            <span className="text-4xl font-light text-gray-600">+</span>
+            <span>+</span> Add Menu Item
+          </button>
+        </div>
+      ) : (
+        // Show existing menu UI when not empty
+        <>
+          <div className="flex items-center space-x-2 mb-6">
+            <div className="flex-grow flex items-center">
+              <CategoryTabs
+                tabs={tabs}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              />
+            </div>
+            <button
+              onClick={() => setIsNewCategoryModalOpen(true)}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center"
+            >
+              <span className="mr-2">+</span> New Category
+            </button>
           </div>
-        )}
-        {Array.isArray(currentItems) &&
-          currentItems.map((item) => (
-            <MenuCard
-              key={item.menu_item_id}
-              item={{
-                id: item.menu_item_id,
-                menu_item_name: item.menu_item_name,
-                menu_item_image:
-                  item.menu_item_image || "/placeholder-image.jpg", // Add a fallback image
-                description: item.description,
-                price: item.price,
-                category: item.category,
+
+          <div className="grid grid-cols-4 gap-4">
+            {/* Always show the add button, regardless of active tab */}
+            <div
+              className="flex items-center justify-center border-2 border-dashed border-gray-400 rounded-lg h-72 hover:bg-gray-100 cursor-pointer bg-gray-50"
+              onClick={() => {
+                setNewItem((prev) => ({
+                  ...prev,
+                  category: activeTab === "All" ? "" : activeTab,
+                }));
+                setIsAddItemModalOpen(true);
               }}
-              onDelete={handleDeleteItem}
-            />
-          ))}
-      </div>
+            >
+              <span className="text-4xl font-light text-gray-600">+</span>
+            </div>
+            
+            {Array.isArray(currentItems) &&
+              currentItems.map((item) => (
+                <MenuCard
+                  key={item.menu_item_id}
+                  item={{
+                    id: item.menu_item_id,
+                    menu_item_name: item.menu_item_name,
+                    menu_item_image: item.menu_item_image,
+                    description: item.description,
+                    price: item.price,
+                    category: item.category,
+                  }}
+                  onDelete={handleDeleteItem}
+                />
+              ))}
+          </div>
+        </>
+      )}
 
       <AddItemModal
         isOpen={isAddItemModalOpen}
@@ -247,7 +405,7 @@ const Menu = () => {
         progress={progress}
       />
 
-      {/* Add New Category Modal */}
+      {/* Update Category Modal */}
       {isNewCategoryModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg w-full max-w-md">
@@ -256,19 +414,21 @@ const Menu = () => {
               type="text"
               className="w-full p-2 border rounded mb-4"
               placeholder="Category Name"
-            // Add necessary handlers
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
             />
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => setIsNewCategoryModalOpen(false)}
+                onClick={() => {
+                  setNewCategoryName("");
+                  setIsNewCategoryModalOpen(false);
+                }}
                 className="px-4 py-2 bg-gray-200 rounded"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  setIsNewCategoryModalOpen(false);
-                }}
+                onClick={handleAddCategory}
                 className="px-4 py-2 bg-blue-500 text-white rounded"
               >
                 Add

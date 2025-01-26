@@ -25,15 +25,18 @@ const AddItemModal = ({
                 type="file"
                 name="image"
                 accept="image/*"
-                onChange={(e) => setNewItem({ ...newItem, image: e.target.files[0] })}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  setNewItem({ ...newItem, image: file });
+                }}
                 className="text-black mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
-              {progress > 0 && (
+              {progress > 0 && progress < 1 && ( // Only show when uploading
                 <div className="mt-2">
                   <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full bg-blue-500"
-                      style={{ width: progress * 100 + '%' }}
+                      style={{ width: `${progress * 100}%` }}
                     />
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
@@ -62,9 +65,11 @@ const AddItemModal = ({
               </label>
               <input
                 type="text"
-                className="text-black mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 bg-gray-100"
-                value={activeTab}
-                disabled
+                className="text-black mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                value={newItem.category || activeTab}
+                onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                placeholder="Enter category name"
+                required
               />
             </div>
             <div>
