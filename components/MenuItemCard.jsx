@@ -9,9 +9,10 @@ export default function MenuItemCard({ menu_item_name, price, menu_item_image, o
     >
       <div className="relative">
         <Image
-          width={70}
-          height={70}
-          src={menu_item_image || "/images/logo.png"}
+          width={400}
+          height={300}
+          quality={95}
+          src={menu_item_image}
           alt={menu_item_name} className="w-full h-48 object-cover" />
         <div className="absolute top-2 right-2 bg-white bg-opacity-90 px-2 py-1 rounded-full">
         </div>

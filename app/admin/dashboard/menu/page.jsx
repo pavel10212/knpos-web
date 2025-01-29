@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useMotionValue } from "framer-motion";
 import CategoryTabs from "@/components/menu/CategoryTabs";
 import MenuCard from "@/components/menu/MenuCard";
@@ -22,12 +22,12 @@ const Menu = () => {
   const [upload, setUpload] = useState(null);
   const progress = useMotionValue(0);
 
-  const verifyAwsConfig = () => {
+  const verifyAwsConfig = useCallback(() => {
     const config = {
       accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
       region: process.env.NEXT_PUBLIC_AWS_REGION,
-      bucketName: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME
+      bucketName: process.env.NEXT_PUBLIC_BUCKET_NAME
     };
 
     const missingVars = Object.entries(config)
@@ -40,9 +40,9 @@ const Menu = () => {
     }
 
     return config;
-  };
+  }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const cachedData = sessionStorage.getItem("menuData");
       if (!cachedData) {
@@ -50,7 +50,7 @@ const Menu = () => {
           `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`
         );
         const data = await response.json();
-        
+
         // Get just the menuItems array from the response
         const items = data.menuItems || [];
 
@@ -75,27 +75,27 @@ const Menu = () => {
       console.error("Error fetching menu data:", error);
       setMenuItems({});
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   useEffect(() => {
     return upload?.abort();
-  }, []);
+  }, [upload]);
 
   useEffect(() => {
     progress.set(0);
     setUpload(null);
   }, [file]);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = useCallback((e) => {
     e.preventDefault();
     setFile(e.target.files[0]);
-  };
+  }, []);
 
-  const handleUpload = async (file) => {
+  const handleUpload = useCallback(async (file) => {
     if (!file) {
       console.error('No file provided for upload');
       return null;
@@ -103,7 +103,7 @@ const Menu = () => {
 
     try {
       const config = verifyAwsConfig();
-      
+
       const s3Client = new S3({
         credentials: {
           accessKeyId: config.accessKeyId,
@@ -135,9 +135,9 @@ const Menu = () => {
       alert(`Failed to upload image: ${err.message}`);
       return null;
     }
-  };
+  }, [verifyAwsConfig]);
 
-  const tabs = getUniqueCategories(menuItems);
+  const tabs = useMemo(() => getUniqueCategories(menuItems), [menuItems]);
   const [activeTab, setActiveTab] = useState("All");
 
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
@@ -150,9 +150,9 @@ const Menu = () => {
     category: "",
   });
 
-  const handleAddItem = async (e) => {
+  const handleAddItem = useCallback(async (e) => {
     e.preventDefault();
-    
+
     try {
       if (!newItem.image) {
         alert('Please select an image');
@@ -172,7 +172,7 @@ const Menu = () => {
         category: newItem.category || activeTab,
         menu_item_image: imageUrl.toString() // Ensure it's a string
       };
-console.log('Sending data:', menuItemData); // Debug log
+      console.log('Sending data:', menuItemData); // Debug log
       const response = await fetch(
         `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-insert`,
         {
@@ -187,7 +187,7 @@ console.log('Sending data:', menuItemData); // Debug log
       if (!response.ok) {
         throw new Error("Failed to add item");
       }
-      
+
       const [addedItem] = await response.json(); // Destructure first item from array
       console.log('Received response:', addedItem); // Debug log
 
@@ -195,7 +195,7 @@ console.log('Sending data:', menuItemData); // Debug log
       setMenuItems((prevItems) => {
         const category = menuItemData.category;
         const newState = { ...prevItems };
-        
+
         if (!newState[category]) {
           newState[category] = [];
         }
@@ -212,7 +212,7 @@ console.log('Sending data:', menuItemData); // Debug log
         };
 
         newState[category] = [...(newState[category] || []), newItemEntry];
-        
+
         // Store in session storage
         sessionStorage.setItem("menuData", JSON.stringify(newState));
         return newState;
@@ -232,32 +232,24 @@ console.log('Sending data:', menuItemData); // Debug log
     } catch (error) {
       console.error("Error adding menu item:", error);
     }
-  };
+  }, [newItem, activeTab, handleUpload]);
 
-  const handleDeleteItem = async (itemId) => {
+  const handleDeleteItem = useCallback(async (itemId) => {
     try {
       const response = await fetch(
         `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-delete/${itemId}`,
-        {
-          method: 'DELETE',
-        }
+        { method: 'DELETE' }
       );
 
-      if (!response.ok) {
-        throw new Error('Failed to delete item');
-      }
+      if (!response.ok) throw new Error('Failed to delete item');
 
-      // Update the state to remove the deleted item
       setMenuItems((prevItems) => {
         const newState = { ...prevItems };
-        // Remove item from all categories
         Object.keys(newState).forEach((category) => {
           newState[category] = newState[category].filter(
             (item) => item.menu_item_id !== itemId
           );
         });
-        
-        // Update session storage
         sessionStorage.setItem("menuData", JSON.stringify(newState));
         return newState;
       });
@@ -265,17 +257,19 @@ console.log('Sending data:', menuItemData); // Debug log
       console.error('Error deleting item:', error);
       alert('Failed to delete item');
     }
-  };
+  }, []);
 
-  const currentItems = Object.values(menuItems)
-    .flat()
-    .filter(
-      (item) => activeTab === "All" || !activeTab || item.category === activeTab
-    );
+  const currentItems = useMemo(() => 
+    Object.values(menuItems)
+      .flat()
+      .filter(
+        (item) => activeTab === "All" || !activeTab || item.category === activeTab
+      ), [menuItems, activeTab]
+  );
 
-  const isEmpty = !currentItems || currentItems.length === 0;
+  const isEmpty = useMemo(() => !currentItems || currentItems.length === 0, [currentItems]);
 
-  const handleFirstItemAdd = () => {
+  const handleFirstItemAdd = useCallback(() => {
     // Open add item modal directly instead of category modal
     setNewItem({
       title: "",
@@ -285,12 +279,12 @@ console.log('Sending data:', menuItemData); // Debug log
       category: "" // Allow user to enter category directly
     });
     setIsAddItemModalOpen(true);
-  };
+  }, []);
 
   // Add new category functionality
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  const handleAddCategory = async () => {
+  const handleAddCategory = useCallback(async () => {
     if (!newCategoryName.trim()) {
       alert('Please enter a category name');
       return;
@@ -324,7 +318,7 @@ console.log('Sending data:', menuItemData); // Debug log
       console.error("Error adding category:", error);
       alert("Failed to add category");
     }
-  };
+  }, [newCategoryName]);
 
   const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
 
@@ -375,7 +369,7 @@ console.log('Sending data:', menuItemData); // Debug log
             >
               <span className="text-4xl font-light text-gray-600">+</span>
             </div>
-            
+
             {Array.isArray(currentItems) &&
               currentItems.map((item) => (
                 <MenuCard
@@ -441,4 +435,4 @@ console.log('Sending data:', menuItemData); // Debug log
   );
 };
 
-export default Menu;
+export default React.memo(Menu);

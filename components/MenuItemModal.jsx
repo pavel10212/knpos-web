@@ -34,7 +34,7 @@ export default function MenuItemModal({ item, onClose, onAddToCart }) {
 
         {/* Item Image */}
         <Image src={item.menu_item_image || "/images/logo.png"}
-          width={70} height={70}
+          width={400} height={300} quality={95}
           alt={item.menu_item_name} className="w-full h-48 object-cover rounded-lg mb-4" />
 
         {/* Item Details */}
