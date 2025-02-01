@@ -9,16 +9,21 @@ import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
 import { useCartStore } from "@/store/customerStore";
 
-const getUniqueCategories = (menuItems) => {
+const getUniqueCategories = (menuItems, inventoryItems) => {
   const allCategories = Object.values(menuItems)
     .flat()
     .map((item) => item.category);
+
+  if (inventoryItems.length > 0) {
+    allCategories.push('Drinks');
+  }
 
   return [...new Set(allCategories)];
 };
 
 export default function MenuPage() {
-  const [menuItems, setMenuItems] = useState({});
+  const [menuItems, setMenuItems] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [error, setError] = useState(null);
@@ -45,6 +50,7 @@ export default function MenuPage() {
         },
       });
 
+
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           sessionStorage.removeItem('token');
@@ -56,7 +62,7 @@ export default function MenuPage() {
 
       const data = await response.json();
       setMenuItems(data.menuItems || []);
-
+      setInventoryItems(data.inventoryItems || []);
     } catch (error) {
       console.error("Error fetching menu data:", error);
       setError("Connection error. Please check your network and try again.");
@@ -72,9 +78,9 @@ export default function MenuPage() {
 
   useEffect(() => {
     if (menuItems) {
-      setCategories(getUniqueCategories(menuItems));
+      setCategories(getUniqueCategories(menuItems, inventoryItems));
     }
-  }, [menuItems]);
+  }, [menuItems, inventoryItems]);
 
 
   const handleCategoryClick = (category) => {
@@ -132,17 +138,46 @@ export default function MenuPage() {
                   className="pt-4"
                 >
                   <h2 className="text-xl font-bold text-gray-800 mb-4">{category}</h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    {menuItems
-                      .filter((item) => item.category === category)
-                      .map((item) => (
-                        <MenuItemCard
-                          key={item.menu_item_id}
-                          {...item}
-                          onClick={() => setSelectedItem(item)}
-                        />
+                  {category === 'Drinks' ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      {inventoryItems.map((item) => (
+                        <div
+                          key={item.inventory_item_id}
+                          className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+                          onClick={() => setSelectedItem({ ...item, isInventoryItem: true })}
+                        >
+                          <div className="p-4">
+                            <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                              <span className="text-4xl">🥤</span>
+                            </div>
+                            <h3 className="font-medium text-gray-800 text-lg mb-2">
+                              {item.inventory_item_name}
+                            </h3>
+                            <div className="flex items-center justify-between">
+                              <span className="text-yellow-500 font-bold">
+                                {item.cost_per_unit} THB
+                              </span>
+                              <button className="text-sm bg-yellow-500 text-white px-3 py-1 rounded-full">
+                                Add
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      {menuItems
+                        .filter((item) => item.category === category)
+                        .map((item) => (
+                          <MenuItemCard
+                            key={item.menu_item_id}
+                            {...item}
+                            onClick={() => setSelectedItem(item)}
+                          />
+                        ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -155,6 +190,7 @@ export default function MenuPage() {
               item={selectedItem}
               onClose={() => setSelectedItem(null)}
               onAddToCart={addToCart}
+              isInventoryItem={selectedItem.isInventoryItem}
             />
           )}
         </div>

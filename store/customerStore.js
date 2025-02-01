@@ -28,29 +28,58 @@ export const useUserStore = create((set) => ({
 export const useCartStore = create((set, get) => ({
   cart: [],
   setCart: (cart) => set({ cart }),
+
   addToCart: (item, quantity = 1, request) =>
     set((state) => {
+      const itemId = item.isInventoryItem
+        ? item.inventory_item_id
+        : item.menu_item_id;
       const existing = state.cart.find(
-        (i) => i.menu_item_id === item.menu_item_id && i.request === request
+        (i) =>
+          (i.isInventoryItem ? i.inventory_item_id : i.menu_item_id) ===
+            itemId && i.request === request
       );
+
+      if (existing) {
+        return {
+          cart: state.cart.map((i) =>
+            (i.isInventoryItem ? i.inventory_item_id : i.menu_item_id) ===
+            itemId
+              ? { ...i, quantity: i.quantity + quantity }
+              : i
+          ),
+        };
+      }
       return {
-        cart: existing
-          ? state.cart.map((i) =>
-            i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
-          )
-          : [...state.cart, { ...item, quantity, request }],
+        cart: [...state.cart, { ...item, quantity, request }],
       };
     }),
+
   removeFromCart: (itemId) =>
     set((state) => ({
-      cart: state.cart.filter((i) => i.id !== itemId),
+      cart: state.cart.filter(
+        (i) =>
+          (i.isInventoryItem ? i.inventory_item_id : i.menu_item_id) !== itemId
+      ),
     })),
+
   updateQuantity: (itemId, quantity) =>
     set((state) => ({
-      cart: state.cart.map((i) => (i.id === itemId ? { ...i, quantity } : i)),
+      cart: state.cart.map((i) =>
+        (i.isInventoryItem ? i.inventory_item_id : i.menu_item_id) === itemId
+          ? { ...i, quantity }
+          : i
+      ),
     })),
+
   calculateTotal: () =>
-    get().cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    get().cart.reduce(
+      (sum, item) =>
+        sum +
+        (item.isInventoryItem ? item.cost_per_unit : item.price) *
+          item.quantity,
+      0
+    ),
 
   orders: [],
   setOrders: (orders) => set({ orders }),
@@ -69,16 +98,28 @@ export const useCartStore = create((set, get) => ({
         order_date_time: new Date().toISOString(),
         completion_date_time: null,
         order_details: JSON.stringify(
-          cart.map((item) => ({
-            menu_item_id: item.menu_item_id,
-            status: 'pending',
-            quantity: item.quantity,
-            request: item.request,
-          }))
+          cart.map((item) => {
+            if (item.isInventoryItem) {
+              return {
+                inventory_item_id: item.inventory_item_id,
+                type: "inventory",
+                status: "pending",
+                quantity: item.quantity,
+                request: item.request,
+                unit_price: item.cost_per_unit,
+              };
+            }
+            return {
+              menu_item_id: item.menu_item_id,
+              type: "menu",
+              status: "pending",
+              quantity: item.quantity,
+              request: item.request,
+              unit_price: item.price,
+            };
+          })
         ),
       };
-
-      console.log("orderDetails:", orderDetails);
 
       const response = await fetch(
         `http://${process.env.NEXT_PUBLIC_IP}:3000/orders-insert`,
@@ -86,7 +127,7 @@ export const useCartStore = create((set, get) => ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(orderDetails),
         }
