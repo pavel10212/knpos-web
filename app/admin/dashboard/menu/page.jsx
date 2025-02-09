@@ -7,6 +7,7 @@ import MenuCard from "@/components/menu/MenuCard";
 import AddItemModal from "@/components/menu/AddItemModal";
 import { S3 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import { fetchMenuData } from '@/services/dataService';
 
 const getUniqueCategories = (menuItems) => {
   const allCategories = Object.values(menuItems)
@@ -44,33 +45,8 @@ const Menu = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const cachedData = sessionStorage.getItem("menuData");
-      if (!cachedData) {
-        const response = await fetch(
-          `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`
-        );
-        const data = await response.json();
-
-        // Get just the menuItems array from the response
-        const items = data.menuItems || [];
-
-        // Group items by category
-        const groupedData = items.reduce((acc, item) => {
-          const category = item.category || 'Uncategorized';
-          if (!acc[category]) {
-            acc[category] = [];
-          }
-          // Add item without modifying the image URL
-          acc[category].push(item);
-          return acc;
-        }, {});
-
-        console.log('Grouped menu data:', groupedData);
-        setMenuItems(groupedData);
-        sessionStorage.setItem("menuData", JSON.stringify(groupedData));
-      } else {
-        setMenuItems(JSON.parse(cachedData));
-      }
+      const data = await fetchMenuData();
+      setMenuItems(data);
     } catch (error) {
       console.error("Error fetching menu data:", error);
       setMenuItems({});
@@ -259,7 +235,7 @@ const Menu = () => {
     }
   }, []);
 
-  const currentItems = useMemo(() => 
+  const currentItems = useMemo(() =>
     Object.values(menuItems)
       .flat()
       .filter(

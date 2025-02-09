@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import InventoryTable from "@/components/inventory/InventoryTable";
 import AddProductModal from "@/components/inventory/AddProductModal";
 import EditStockModal from "@/components/inventory/EditStockModal";
+import { fetchInventoryData } from '@/services/dataService';
 
 const Inventory = () => {
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -25,27 +26,9 @@ const Inventory = () => {
   console.log(inventoryItems)
 
 
-
   const loadData = async () => {
-    try {
-      const cachedData = sessionStorage.getItem('inventoryData')
-      if (!cachedData) {
-        try {
-          console.log('No cache, fetching from server');
-          const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-get`);
-          const data = await response.json();
-          setInventoryItems(data);
-          sessionStorage.setItem('inventoryData', JSON.stringify(data));
-        } catch (error) {
-          console.log("Could not fetch from server")
-        }
-      } else {
-        console.log("Cache found, using that")
-        setInventoryItems(JSON.parse(cachedData));
-      }
-    } catch (error) {
-      console.log("Error fetching menu data: ", error);
-    }
+    const data = await fetchInventoryData();
+    setInventoryItems(data);
   }
 
 

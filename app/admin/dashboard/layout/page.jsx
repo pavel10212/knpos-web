@@ -3,15 +3,12 @@
 import React, { useEffect, useState } from "react";
 import TableTemplates from "@/components/layout/TableTemplates";
 import DraggableTable from "@/components/layout/DraggableTable";
-
-
-
+import { fetchTableData } from '@/services/dataService';
 
 const Layout = () => {
   const [tableCounter, setTableCounter] = useState(1);
   const [tables, setTables] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
-
 
   const formatTables = (tables) => {
     const formattedTables = tables.map(table => ({
@@ -25,32 +22,12 @@ const Layout = () => {
     }))
     return formattedTables
   }
+
   const loadTables = async () => {
-    try {
-      const cachedLayout = sessionStorage.getItem('tableLayout')
-      if (cachedLayout) {
-        const parsedLayout = JSON.parse(cachedLayout)
-        const formattedTables = formatTables(parsedLayout)
-        setTables(formattedTables)
-      } else {
-        console.log('fetching from server')
-        const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/table-get`);
-        console.log('got response', response)
-        if (!response.ok) {
-          throw new Error('Failed to fetch tables')
-        }
-        const data = await response.json()
-        const formattedTables = formatTables(data);
-        setTables(formattedTables)
-
-
-        sessionStorage.setItem('tableLayout', JSON.stringify(data));
-      }
-    } catch (error) {
-      console.log('Error loading tables:', error);
-    }
-  }
-
+    const data = await fetchTableData();
+    const formattedTables = formatTables(data);
+    setTables(formattedTables);
+  };
 
   useEffect(() => {
     loadTables();
@@ -96,9 +73,6 @@ const Layout = () => {
       setIsSaving(false);
     }
   };
-
-
-
 
   const predefinedTables = [
     { type: "4-seater", shape: "square", size: "w-32 h-32" },
