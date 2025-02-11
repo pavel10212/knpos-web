@@ -31,53 +31,32 @@ export const useCartStore = create((set, get) => ({
 
   addToCart: (item, quantity = 1, request) =>
     set((state) => {
-      const itemId = item.isInventoryItem
-        ? item.inventory_item_id
-        : item.menu_item_id;
-      const existing = state.cart.find(
-        (i) =>
-          (i.isInventoryItem ? i.inventory_item_id : i.menu_item_id) ===
-            itemId && i.request === request
-      );
-
-      if (existing) {
-        return {
-          cart: state.cart.map((i) =>
-            (i.isInventoryItem ? i.inventory_item_id : i.menu_item_id) ===
-            itemId
-              ? { ...i, quantity: i.quantity + quantity }
-              : i
-          ),
-        };
-      }
-      return {
-        cart: [...state.cart, { ...item, quantity, request }],
-      };
+      const newItems = Array(quantity)
+        .fill(null)
+        .map(() => ({
+          ...item,
+          request,
+          cartItemId: Math.random().toString(36).substr(2, 9), 
+        }));
+      return { cart: [...state.cart, ...newItems] };
     }),
 
-  removeFromCart: (itemId) =>
+  updateRequest: (cartItemId, newRequest) =>
     set((state) => ({
-      cart: state.cart.filter(
-        (i) =>
-          (i.isInventoryItem ? i.inventory_item_id : i.menu_item_id) !== itemId
+      cart: state.cart.map((item) =>
+        item.cartItemId === cartItemId ? { ...item, request: newRequest } : item
       ),
     })),
 
-  updateQuantity: (itemId, quantity) =>
+  removeFromCart: (cartItemId) =>
     set((state) => ({
-      cart: state.cart.map((i) =>
-        (i.isInventoryItem ? i.inventory_item_id : i.menu_item_id) === itemId
-          ? { ...i, quantity }
-          : i
-      ),
+      cart: state.cart.filter((item) => item.cartItemId !== cartItemId),
     })),
 
   calculateTotal: () =>
     get().cart.reduce(
       (sum, item) =>
-        sum +
-        (item.isInventoryItem ? item.cost_per_unit : item.price) *
-          item.quantity,
+        sum + (item.isInventoryItem ? item.cost_per_unit : item.price),
       0
     ),
 
@@ -87,6 +66,7 @@ export const useCartStore = create((set, get) => ({
     set((state) => ({
       orders: [...state.orders, order],
     })),
+
   saveOrder: async (cart, total, token) => {
     try {
       const tableNum = await fetchTableNumber(token);
@@ -104,7 +84,7 @@ export const useCartStore = create((set, get) => ({
                 inventory_item_id: item.inventory_item_id,
                 type: "inventory",
                 status: "pending",
-                quantity: item.quantity,
+                quantity: 1,
                 request: item.request,
                 unit_price: item.cost_per_unit,
               };
@@ -113,7 +93,7 @@ export const useCartStore = create((set, get) => ({
               menu_item_id: item.menu_item_id,
               type: "menu",
               status: "pending",
-              quantity: item.quantity,
+              quantity: 1,
               request: item.request,
               unit_price: item.price,
             };

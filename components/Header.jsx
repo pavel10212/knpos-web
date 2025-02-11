@@ -9,7 +9,7 @@ export default function Header({ categories, onCategoryClick }) {
   const { cart } = useCartStore();
   const router = useRouter();
   const [token, setToken] = useState(null);
-  const cartItemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
+  const cartItemCount = cart.length
 
   useEffect(() => {
     const storedToken = sessionStorage.getItem("token");

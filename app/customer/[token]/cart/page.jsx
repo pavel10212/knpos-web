@@ -14,13 +14,12 @@ export default function Cart() {
   const cart = useCartStore((state) => state.cart);
   const calculateTotal = useCartStore((state) => state.calculateTotal);
   const setCart = useCartStore((state) => state.setCart);
+  const updateRequest = useCartStore((state) => state.updateRequest);
   const saveOrder = useCartStore((state) => state.saveOrder);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
-  const updateQuantity = useCartStore((state) => state.updateQuantity);
   const router = useRouter();
   const total = calculateTotal();
   const [token, setToken] = useState(null);
-  const [expandedItems, setExpandedItems] = useState({});
 
   useEffect(() => {
     const storedToken = sessionStorage.getItem('token');
@@ -32,13 +31,6 @@ export default function Cart() {
     saveOrder(cart, total, token);
     router.push(`/customer/${token}/order-confirmation?total=${total}`);
     setCart([]);
-  };
-
-  const toggleExpand = (itemId) => {
-    setExpandedItems(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId]
-    }));
   };
 
   return (
@@ -57,11 +49,10 @@ export default function Cart() {
           <>
             {cart.map((item) => (
               <div
-                key={`${item.menu_item_id || item.inventory_item_id}-${item.request}`}
+                key={item.cartItemId}
                 className="flex items-start gap-4 bg-white shadow-sm rounded-lg p-4 mb-4"
               >
                 {!item.isInventoryItem ? (
-                  // Menu item display
                   <Image
                     width={64}
                     height={64}
@@ -70,34 +61,25 @@ export default function Cart() {
                     className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                   />
                 ) : (
-                  // Inventory item placeholder image
                   <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center">
                     <span className="text-2xl">🥤</span>
                   </div>
                 )}
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold">
+                  <h3 className="font-semibold text-gray-700">
                     {item.isInventoryItem ? item.inventory_item_name : item.menu_item_name}
                   </h3>
                   {!item.isInventoryItem && (
                     <p className="text-sm text-gray-500 mb-2">⭐ 4.9 (120 reviews)</p>
                   )}
-                  {item.request && (
-                    <div 
-                      className="text-sm text-gray-500 cursor-pointer break-words max-w-[200px]"
-                      onClick={() => toggleExpand(item.menu_item_id || item.inventory_item_id)}
-                    >
-                      {expandedItems[item.menu_item_id || item.inventory_item_id] 
-                        ? item.request
-                        : truncateText(item.request, 50)}
-                      {item.request.length > 50 && (
-                        <span className="text-yellow-500 ml-1 whitespace-nowrap">
-                          {expandedItems[item.menu_item_id || item.inventory_item_id] ? 'Show less' : 'Show more'}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  <textarea
+                    value={item.request || ''}
+                    onChange={(e) => updateRequest(item.cartItemId, e.target.value)}
+                    className="text-sm text-gray-500 w-full p-1 border rounded"
+                    placeholder="Special requests..."
+                    rows="2"
+                  />
                   <p className="font-semibold text-yellow-500 mt-1">
                     {item.isInventoryItem ? item.cost_per_unit : item.price} THB
                   </p>
@@ -105,33 +87,11 @@ export default function Cart() {
 
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                   <button
-                    onClick={() => removeFromCart(item.isInventoryItem ? item.inventory_item_id : item.menu_item_id)}
+                    onClick={() => removeFromCart(item.cartItemId)}
                     className="text-red-500 text-sm"
                   >
-                    Delete
+                    Remove
                   </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => updateQuantity(
-                        item.isInventoryItem ? item.inventory_item_id : item.menu_item_id, 
-                        item.quantity - 1
-                      )}
-                      className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center"
-                      disabled={item.quantity <= 1}
-                    >
-                      -
-                    </button>
-                    <span>{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(
-                        item.isInventoryItem ? item.inventory_item_id : item.menu_item_id, 
-                        item.quantity + 1
-                      )}
-                      className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center"
-                    >
-                      +
-                    </button>
-                  </div>
                 </div>
               </div>
             ))}
@@ -144,7 +104,7 @@ export default function Cart() {
             </button>
 
             <div className="text-right">
-              <p className="text-lg font-bold">Total: {total.toFixed(2)} THB</p>
+              <p className="text-lg font-bold text-gray-600">Total: {total.toFixed(2)} THB</p>
             </div>
           </>
         )}
