@@ -183,7 +183,7 @@ const Reports = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className="bg-white rounded-2xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between ">
               <h2 className="text-xl font-semibold text-gray-900">
                 Orders Trend
               </h2>
@@ -196,7 +196,7 @@ const Reports = () => {
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">
               Monthly Revenue
             </h2>
             <MonthlyRevenueChart orders={data.orders} />
@@ -204,17 +204,11 @@ const Reports = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Recent Orders
-            </h2>
+          <div className="bg-white rounded-2xl shadow-sm">
             <RecentOrders orders={data.orders.slice(0, 4)} />
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Popular Items
-            </h2>
+          <div className="bg-white rounded-2xl shadow-sm">
             <PopularItems orders={data.orders} menuItems={data.menuItems} />
           </div>
         </div>

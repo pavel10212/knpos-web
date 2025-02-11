@@ -80,10 +80,6 @@ const MonthlyRevenueChart = ({ orders }) => {
       legend: {
         position: "top",
       },
-      title: {
-        display: true,
-        text: "Monthly Revenue",
-      },
     },
     scales: {
       y: {
@@ -96,7 +92,7 @@ const MonthlyRevenueChart = ({ orders }) => {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow">
+    <div className="bg-blue-50 p-2 rounded-lg shadow-lg h-[318px]">
       <Line data={chartData} options={options} />
     </div>
   );

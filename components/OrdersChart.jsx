@@ -137,12 +137,6 @@ const OrdersChart = ({ orders, period = "weekly" }) => {
       legend: {
         position: "top",
       },
-      title: {
-        display: true,
-        text: `${
-          period.charAt(0).toUpperCase() + period.slice(1)
-        } Order Volume`,
-      },
     },
     scales: {
       y: {
@@ -155,7 +149,7 @@ const OrdersChart = ({ orders, period = "weekly" }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
+    <div className="bg-blue-50 p-2 rounded-lg shadow-lg">
       <Line options={options} data={data} />
     </div>
   );
