@@ -196,7 +196,7 @@ const Reports = () => {
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Monthly Revenue
             </h2>
             <MonthlyRevenueChart orders={data.orders} />
