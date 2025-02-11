@@ -8,22 +8,10 @@ import Footer from "@/components/Footer";
 import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
 import { useCartStore } from "@/store/customerStore";
-
-const getUniqueCategories = (menuItems, inventoryItems) => {
-  const allCategories = Object.values(menuItems)
-    .flat()
-    .map((item) => item.category);
-
-  if (inventoryItems.length > 0) {
-    allCategories.push('Drinks');
-  }
-
-  return [...new Set(allCategories)];
-};
+import { fetchCategoryData } from "@/services/dataService";
 
 export default function MenuPage() {
   const [menuItems, setMenuItems] = useState([]);
-  const [inventoryItems, setInventoryItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [error, setError] = useState(null);
@@ -50,7 +38,6 @@ export default function MenuPage() {
         },
       });
 
-
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           sessionStorage.removeItem('token');
@@ -62,12 +49,24 @@ export default function MenuPage() {
 
       const data = await response.json();
       setMenuItems(data.menuItems || []);
-      setInventoryItems(data.inventoryItems || []);
     } catch (error) {
       console.error("Error fetching menu data:", error);
       setError("Connection error. Please check your network and try again.");
     }
   };
+
+  const fetchCategories = async () => {
+    try {
+      const categoryData = await fetchCategoryData();
+      setCategories(categoryData);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []); 
 
   useEffect(() => {
     if (token) {
@@ -76,16 +75,9 @@ export default function MenuPage() {
     fetchData();
   }, [token]);
 
-  useEffect(() => {
-    if (menuItems) {
-      setCategories(getUniqueCategories(menuItems, inventoryItems));
-    }
-  }, [menuItems, inventoryItems]);
-
-
-  const handleCategoryClick = (category) => {
+  const handleCategoryClick = (categoryId) => {
     const headerHeight = document.querySelector("header").offsetHeight || 180;
-    const categoryElement = categoryRefs.current[category];
+    const categoryElement = categoryRefs.current[categoryId];
 
     if (categoryElement) {
       const elementPosition = categoryElement.getBoundingClientRect().top;
@@ -95,8 +87,6 @@ export default function MenuPage() {
         top: offsetPosition,
         behavior: "smooth",
       });
-    } else {
-      console.error(`Category "${category}" not found`);
     }
   }
 
@@ -126,58 +116,29 @@ export default function MenuPage() {
               Choose the best dish for you
             </h1>
 
-            <div className="mt-4 space-y-8 pb-4 ">
+            <div className="mt-4 space-y-8 pb-4">
               {categories.map((category) => (
                 <div
-                  key={category}
+                  key={category.category_id}
                   ref={(el) => {
-                    if (el && !categoryRefs.current[category]) {
-                      categoryRefs.current[category] = el;
+                    if (el && !categoryRefs.current[category.category_id]) {
+                      categoryRefs.current[category.category_id] = el;
                     }
                   }}
                   className="pt-4"
                 >
-                  <h2 className="text-xl font-bold text-gray-800 mb-4">{category}</h2>
-                  {category === 'Drinks' ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      {inventoryItems.map((item) => (
-                        <div
-                          key={item.inventory_item_id}
-                          className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                          onClick={() => setSelectedItem({ ...item, isInventoryItem: true })}
-                        >
-                          <div className="p-4">
-                            <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                              <span className="text-4xl">🥤</span>
-                            </div>
-                            <h3 className="font-medium text-gray-800 text-lg mb-2">
-                              {item.inventory_item_name}
-                            </h3>
-                            <div className="flex items-center justify-between">
-                              <span className="text-yellow-500 font-bold">
-                                {item.cost_per_unit} THB
-                              </span>
-                              <button className="text-sm bg-yellow-500 text-white px-3 py-1 rounded-full">
-                                Add
-                              </button>
-                            </div>
-                          </div>
-                        </div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-4">{category.category_name}</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {menuItems
+                      .filter((item) => item.category_id === category.category_id)
+                      .map((item) => (
+                        <MenuItemCard
+                          key={item.menu_item_id}
+                          {...item}
+                          onClick={() => setSelectedItem(item)}
+                        />
                       ))}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                      {menuItems
-                        .filter((item) => item.category === category)
-                        .map((item) => (
-                          <MenuItemCard
-                            key={item.menu_item_id}
-                            {...item}
-                            onClick={() => setSelectedItem(item)}
-                          />
-                        ))}
-                    </div>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -190,7 +151,6 @@ export default function MenuPage() {
               item={selectedItem}
               onClose={() => setSelectedItem(null)}
               onAddToCart={addToCart}
-              isInventoryItem={selectedItem.isInventoryItem}
             />
           )}
         </div>

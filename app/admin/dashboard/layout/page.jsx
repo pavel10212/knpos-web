@@ -1,18 +1,20 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import TableTemplates from "@/components/layout/TableTemplates";
 import DraggableTable from "@/components/layout/DraggableTable";
-import { fetchTableData } from '@/services/dataService';
+import { fetchTableData, saveTableLayout, deleteTable } from '@/services/dataService';
 import { toast } from "sonner";
 
+const GRID_SIZE = 20;
+
 const Layout = () => {
-  const [tableCounter, setTableCounter] = useState(1);
   const [tables, setTables] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  const formatTables = (tables) => {
-    const formattedTables = tables.map(table => ({
+  // Memoize formatTables function
+  const formatTables = useCallback((tables) => {
+    return tables.map(table => ({
       id: table.table_num,
       type: `${table.capacity}-seater`,
       x: table.location.x,
@@ -20,96 +22,55 @@ const Layout = () => {
       rotation: table.rotation.toString(),
       status: table.status,
       label: `Table ${table.table_num}\n${table.capacity} seats`
-    }))
-    return formattedTables
-  }
+    }));
+  }, []);
 
-  const loadTables = async () => {
+  const loadTables = useCallback(async () => {
     try {
       const data = await fetchTableData();
-      const formattedTables = formatTables(data);
-      setTables(formattedTables);
+      setTables(formatTables(data));
     } catch (error) {
       console.error("Error loading tables:", error);
       toast.error('Failed to load table layout');
     }
-  };
+  }, [formatTables]);
 
   useEffect(() => {
     loadTables();
-  }, []);
+  }, [loadTables]);
 
-  const saveToEC2 = async () => {
+  const saveToEC2 = useCallback(async () => {
+    if (isSaving) return;
     setIsSaving(true);
 
-    const savePromise = new Promise(async (resolve, reject) => {
-      try {
-        const tablesToSave = tables.map((table) => ({
-          table_num: parseInt(table.id),
-          status: "Available",
-          capacity: parseInt(table.type[0]),
-          location: {
-            x: parseInt(table.x),
-            y: parseInt(table.y),
-          },
-          rotation: parseInt(table.rotation),
-        }));
+    try {
+      await saveTableLayout(tables);
+      toast.success('Table layout saved successfully');
+    } catch (error) {
+      toast.error(`Failed to save layout: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [tables, isSaving]);
 
-        const response = await fetch(
-          `http://${process.env.NEXT_PUBLIC_IP}:3000/table-insert`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(tablesToSave),
-          }
-        );
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.details || "Failed to save tables");
-        }
-
-        sessionStorage.setItem('tableLayout', JSON.stringify(tablesToSave));
-        resolve();
-      } catch (error) {
-        reject(error);
-      } finally {
-        setIsSaving(false);
-      }
-    });
-
-    toast.promise(savePromise, {
-      loading: 'Saving table layout...',
-      success: 'Table layout saved successfully',
-      error: (err) => `Failed to save layout: ${err.message}`
-    });
-  };
-
-  const predefinedTables = [
+  // Memoize predefined tables
+  const predefinedTables = useMemo(() => [
     { type: "4-seater", shape: "square", size: "w-32 h-32" },
     { type: "2-seater", shape: "circle", size: "w-24 h-24" },
     { type: "6-seater", shape: "rectangle", size: "w-48 h-32" },
-  ];
+  ], []);
 
-  const GRID_SIZE = 20;
-
-  const snapToGrid = (value) => {
+  const snapToGrid = useCallback((value) => {
     return Math.round(value / GRID_SIZE) * GRID_SIZE;
-  };
+  }, []);
 
-  const handleDragStart = (e, data, isTemplate = false) => {
-    if (isTemplate) {
-      e.dataTransfer.setData("type", "template");
-      e.dataTransfer.setData("tableType", data);
-    } else {
-      e.dataTransfer.setData("type", "existing");
-      e.dataTransfer.setData("tableId", data.toString());
-    }
-  };
+  const handleDragStart = useCallback((e, data, isTemplate = false) => {
+    e.dataTransfer.setData("type", isTemplate ? "template" : "existing");
+    e.dataTransfer.setData(isTemplate ? "tableType" : "tableId", data.toString());
+  }, []);
 
-  const handleDrop = (e) => {
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
     const type = e.dataTransfer.getData("type");
     const dropZone = e.currentTarget.getBoundingClientRect();
     const newX = snapToGrid(e.clientX - dropZone.left - 50);
@@ -119,12 +80,7 @@ const Layout = () => {
       const tableType = e.dataTransfer.getData("tableType");
       const newTable = {
         id: tables.length + 1,
-        label: `TABLE ${tables.length + 1}\n${tableType === "2-seater"
-          ? "FITS 2"
-          : tableType === "6-seater"
-            ? "FITS 6"
-            : "FITS 4"
-          }`,
+        label: `TABLE ${tables.length + 1}\n${tableType.split('-')[0]} FITS`,
         x: newX,
         y: newY,
         rotation: 0,
@@ -132,103 +88,121 @@ const Layout = () => {
         type: tableType,
       };
 
-      setTables([...tables, newTable]);
-      setTableCounter((prev) => prev + 1);
+      setTables(prev => [...prev, newTable]);
     } else {
       const tableId = parseInt(e.dataTransfer.getData("tableId"));
-      setTables(
-        tables.map((table) =>
-          table.id === tableId ? { ...table, x: newX, y: newY } : table
-        )
-      );
+      setTables(prev => prev.map(table =>
+        table.id === tableId ? { ...table, x: newX, y: newY } : table
+      ));
     }
-  };
+  }, [tables.length, snapToGrid]);
 
-  const handleRemoveTable = async (tableId) => {
+  const handleRemoveTable = useCallback(async (tableId) => {
     try {
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_IP}:3000/table-delete/${tableId}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete table");
-      }
-
-      // Update state
-      setTables((prev) => {
-        const updatedTables = prev.filter((table) => table.id !== tableId);
-
-        // Update session storage with new table layout
-        const tablesToCache = updatedTables.map((table) => ({
+      await deleteTable(tableId);
+      setTables(prev => {
+        const updatedTables = prev.filter(table => table.id !== tableId);
+        const tablesToCache = updatedTables.map(table => ({
           table_num: parseInt(table.id),
           status: "Available",
           capacity: parseInt(table.type[0]),
-          location: {
-            x: parseInt(table.x),
-            y: parseInt(table.y),
-          },
+          location: { x: parseInt(table.x), y: parseInt(table.y) },
           rotation: parseInt(table.rotation),
         }));
-
         sessionStorage.setItem('tableLayout', JSON.stringify(tablesToCache));
         return updatedTables;
       });
-
       toast.success("Table deleted successfully");
     } catch (error) {
-      console.error("Error deleting table:", error);
       toast.error("Failed to delete table");
     }
-  };
+  }, []);
+
+  const handleRotateTable = useCallback((tableId) => {
+    setTables(prev => prev.map(table =>
+      table.id === tableId
+        ? { ...table, rotation: (parseInt(table.rotation) + 90) % 360 }
+        : table
+    ));
+  }, []);
 
   const handleDragOver = (e) => {
-    e.preventDefault(); // Allow drop
-  };
-
-  const handleRotateTable = (tableId) => {
-    setTables((prev) =>
-      prev.map((table) =>
-        table.id === tableId
-          ? { ...table, rotation: (table.rotation + 90) % 360 }
-          : table
-      )
-    );
+    e.preventDefault();
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Layout</h1>
-      <button
-        className={`${isSaving ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-700"
-          } text-white font-bold py-2 px-4 rounded`}
-        onClick={() => saveToEC2()}
-        disabled={isSaving}
-      >
-        Save Changes
-      </button>
-      <div
-        className="relative w-full h-[500px] border border-gray-300 bg-gray-50 mb-6"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-      >
-        {tables.map((table) => (
-          <DraggableTable
-            key={table.id}
-            table={table}
-            onDragStart={handleDragStart}
-            onRotate={handleRotateTable}
-            onRemove={handleRemoveTable}
-          />
-        ))}
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+            Table Layout Management
+          </h1>
+          <button
+            onClick={() => saveToEC2()}
+            disabled={isSaving}
+            className={`
+              inline-flex items-center px-6 py-3 border border-transparent
+              text-base font-medium rounded-full shadow-sm text-white
+              transition-all duration-200 focus:outline-none focus:ring-2 
+              focus:ring-offset-2 focus:ring-indigo-500
+              ${isSaving 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-indigo-600 hover:bg-indigo-700'
+              }
+            `}
+          >
+            {isSaving ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving Changes...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Save Changes
+              </>
+            )}
+          </button>
+        </div>
 
-      <TableTemplates
-        predefinedTables={predefinedTables}
-        onDragStart={handleDragStart}
-      />
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-8">
+          <div
+            className="relative w-full h-[600px] bg-gradient-to-b from-gray-50 to-gray-100 border border-gray-200"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
+            {tables.map((table) => (
+              <DraggableTable
+                key={table.id}
+                table={table}
+                onDragStart={handleDragStart}
+                onRotate={handleRotateTable}
+                onRemove={handleRemoveTable}
+              />
+            ))}
+            
+            {/* Grid overlay */}
+            <div className="absolute inset-0 grid grid-cols-[repeat(auto-fill,minmax(20px,1fr))] grid-rows-[repeat(auto-fill,minmax(20px,1fr))] pointer-events-none">
+              {Array.from({ length: 1000 }).map((_, i) => (
+                <div key={i} className="border border-gray-100/20" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Available Table Templates</h2>
+          <TableTemplates
+            predefinedTables={predefinedTables}
+            onDragStart={handleDragStart}
+          />
+        </div>
+      </div>
     </div>
   );
 };

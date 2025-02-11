@@ -1,417 +1,215 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useMotionValue } from "framer-motion";
 import CategoryTabs from "@/components/menu/CategoryTabs";
 import MenuCard from "@/components/menu/MenuCard";
 import AddItemModal from "@/components/menu/AddItemModal";
-import { S3 } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
-import { fetchMenuData } from '@/services/dataService';
+import { useMenu } from "@/hooks/useMenu";
 import { toast } from "sonner";
-
-const getUniqueCategories = (menuItems) => {
-  const allCategories = Object.values(menuItems)
-    .flat()
-    .map((item) => item.category);
-
-  return ["All", ...new Set(allCategories)];
-};
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 const Menu = () => {
-  const [menuItems, setMenuItems] = useState({});
-  const [file, setFile] = useState(null);
-  const [upload, setUpload] = useState(null);
   const progress = useMotionValue(0);
-
-  const verifyAwsConfig = useCallback(() => {
-    const config = {
-      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
-      region: process.env.NEXT_PUBLIC_AWS_REGION,
-      bucketName: process.env.NEXT_PUBLIC_BUCKET_NAME
-    };
-
-    const missingVars = Object.entries(config)
-      .filter(([_, value]) => !value)
-      .map(([key]) => key);
-
-    if (missingVars.length > 0) {
-      console.error('Missing AWS configuration:', missingVars);
-      throw new Error(`Missing AWS configuration: ${missingVars.join(', ')}`);
-    }
-
-    return config;
-  }, []);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const data = await fetchMenuData();
-      setMenuItems(data);
-    } catch (error) {
-      console.error("Error fetching menu data:", error);
-      toast.error('Failed to load menu data');
-      setMenuItems({});
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  useEffect(() => {
-    return upload?.abort();
-  }, [upload]);
-
-  useEffect(() => {
-    progress.set(0);
-    setUpload(null);
-  }, [file]);
-
-  const handleFileChange = useCallback((e) => {
-    e.preventDefault();
-    setFile(e.target.files[0]);
-  }, []);
-
-  const handleUpload = useCallback(async (file) => {
-    if (!file) {
-      console.error('No file provided for upload');
-      return null;
-    }
-
-    try {
-      const config = verifyAwsConfig();
-
-      const s3Client = new S3({
-        credentials: {
-          accessKeyId: config.accessKeyId,
-          secretAccessKey: config.secretAccessKey,
-        },
-        region: config.region
-      });
-
-      const upload = new Upload({
-        client: s3Client,
-        params: {
-          Bucket: config.bucketName,
-          Key: `menu-items/${Date.now()}-${file.name}`,
-          Body: file,
-          ContentType: file.type,
-        }
-      });
-
-      upload.on("httpUploadProgress", (p) => {
-        console.log('Upload progress:', Math.round((p.loaded / p.total) * 100));
-        progress.set(p.loaded / p.total);
-      });
-
-      const result = await upload.done();
-      console.log('Upload successful:', result.Location);
-      return result.Location;
-    } catch (err) {
-      console.error('Upload error:', err);
-      alert(`Failed to upload image: ${err.message}`);
-      return null;
-    }
-  }, [verifyAwsConfig]);
-
-  const tabs = useMemo(() => getUniqueCategories(menuItems), [menuItems]);
-  const [activeTab, setActiveTab] = useState("All");
-
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-
-  const [newItem, setNewItem] = useState({
-    title: "",
-    price: "",
-    description: "",
-    image: "",
-    category: "",
-  });
-
-  const handleAddItem = useCallback(async (e) => {
-    e.preventDefault();
-    
-    const addItemPromise = new Promise(async (resolve, reject) => {
-      try {
-        if (!newItem.image) {
-          reject(new Error('Please select an image'));
-          return;
-        }
-
-        const imageUrl = await handleUpload(newItem.image);
-        if (!imageUrl) {
-          reject(new Error('Failed to upload image'));
-          return;
-        }
-
-        const menuItemData = {
-          menu_item_name: newItem.title,
-          price: newItem.price,
-          description: newItem.description,
-          category: newItem.category || activeTab,
-          menu_item_image: imageUrl.toString()
-        };
-
-        const response = await fetch(
-          `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-insert`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(menuItemData),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to add item");
-        }
-
-        const [addedItem] = await response.json();
-        
-        setMenuItems((prevItems) => {
-          const category = menuItemData.category;
-          const newState = { ...prevItems };
-          if (!newState[category]) {
-            newState[category] = [];
-          }
-          newState[category] = [...(newState[category] || []), {
-            id: addedItem.menu_item_id,
-            menu_item_id: addedItem.menu_item_id,
-            menu_item_name: menuItemData.menu_item_name,
-            menu_item_image: menuItemData.menu_item_image,
-            description: menuItemData.description,
-            price: menuItemData.price,
-            category: menuItemData.category,
-          }];
-          sessionStorage.setItem("menuData", JSON.stringify(newState));
-          return newState;
-        });
-
-        setNewItem({
-          title: "", price: "", description: "", image: "", category: "",
-        });
-        setIsAddItemModalOpen(false);
-        setFile(null);
-        
-        resolve(addedItem);
-      } catch (error) {
-        reject(error);
-      }
-    });
-
-    toast.promise(addItemPromise, {
-      loading: 'Adding menu item...',
-      success: 'Menu item added successfully',
-      error: (err) => `Failed to add menu item: ${err.message}`
-    });
-  }, [newItem, activeTab, handleUpload]);
-
-  const handleDeleteItem = useCallback(async (itemId) => {
-    const deletePromise = new Promise(async (resolve, reject) => {
-      try {
-        const response = await fetch(
-          `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-delete/${itemId}`,
-          { method: 'DELETE' }
-        );
-
-        if (!response.ok) throw new Error('Failed to delete item');
-
-        setMenuItems((prevItems) => {
-          const newState = { ...prevItems };
-          Object.keys(newState).forEach((category) => {
-            newState[category] = newState[category].filter(
-              (item) => item.menu_item_id !== itemId
-            );
-          });
-          sessionStorage.setItem("menuData", JSON.stringify(newState));
-          return newState;
-        });
-        
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
-
-    toast.promise(deletePromise, {
-      loading: 'Deleting menu item...',
-      success: 'Menu item deleted successfully',
-      error: 'Failed to delete menu item'
-    });
-  }, []);
-
-  const currentItems = useMemo(() =>
-    Object.values(menuItems)
-      .flat()
-      .filter(
-        (item) => activeTab === "All" || !activeTab || item.category === activeTab
-      ), [menuItems, activeTab]
-  );
-
-  const isEmpty = useMemo(() => !currentItems || currentItems.length === 0, [currentItems]);
-
-  const handleFirstItemAdd = useCallback(() => {
-    // Open add item modal directly instead of category modal
-    setNewItem({
-      title: "",
-      price: "",
-      description: "",
-      image: "",
-      category: "" // Allow user to enter category directly
-    });
-    setIsAddItemModalOpen(true);
-  }, []);
-
-  // Add new category functionality
+  const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newItem, setNewItem] = useState({
+    title: "", price: "", description: "", image: "", category: ""
+  });
+  const [editingItem, setEditingItem] = useState(null);
 
-  const handleAddCategory = useCallback(async () => {
-    if (!newCategoryName.trim()) {
-      toast.error('Please enter a category name');
+  const {
+    loading,
+    activeTab,
+    setActiveTab,
+    tabs,
+    currentItems,
+    categoryItems,
+    addItem,
+    deleteItem,
+    addCategory,
+    editItem
+  } = useMenu();
+
+  const handleAddItem = async (e) => {
+    e.preventDefault();
+    if (!newItem.category) {
+      toast.error('Please select a category');
       return;
     }
 
-    const categoryPromise = new Promise(async (resolve, reject) => {
-      try {
-        const response = await fetch(
-          `http://${process.env.NEXT_PUBLIC_IP}:3000/category-insert`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ category_name: newCategoryName }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to add category");
-        }
-
-        setActiveTab(newCategoryName);
-        setIsNewCategoryModalOpen(false);
-        setIsAddItemModalOpen(true);
-        setNewItem(prev => ({
-          ...prev,
-          category: newCategoryName
-        }));
-        
-        resolve();
-      } catch (error) {
-        reject(error);
+    toast.promise(
+      addItem({ ...newItem, onProgress: (p) => progress.set(p) })
+        .then(() => {
+          setIsAddItemModalOpen(false);
+          setNewItem({ title: "", price: "", description: "", image: "", category: "" });
+        }),
+      {
+        loading: 'Saving menu item...',
+        success: 'Menu item added successfully',
+        error: 'Failed to add menu item'
       }
-    });
+    );
+  };
 
-    toast.promise(categoryPromise, {
-      loading: 'Adding new category...',
-      success: 'Category added successfully',
-      error: 'Failed to add category'
-    });
-  }, [newCategoryName]);
+  const handleEditItem = async (e) => {
+    e.preventDefault();
+    if (!newItem.category) {
+      toast.error('Please select a category');
+      return;
+    }
 
-  const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
+    toast.promise(
+      editItem(editingItem.menu_item_id, { 
+        ...newItem,
+        onProgress: (p) => progress.set(p) 
+      })
+        .then(() => {
+          setIsAddItemModalOpen(false);
+          setEditingItem(null);
+          setNewItem({ title: "", price: "", description: "", image: "", category: "" });
+        }),
+      {
+        loading: 'Updating menu item...',
+        success: 'Menu item updated successfully',
+        error: 'Failed to update menu item'
+      }
+    );
+  };
+
+  const handleStartEdit = (item) => {
+    setEditingItem(item);
+    setNewItem({
+      title: item.menu_item_name,
+      price: item.price.toString(),
+      description: item.description,
+      category: item.category_id.toString(),
+      imageUrl: item.menu_item_image
+    });
+    setIsAddItemModalOpen(true);
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error('Category name cannot be empty');
+      return;
+    }
+
+    toast.promise(
+      addCategory(newCategoryName).then(() => {
+        setNewCategoryName("");
+        setIsNewCategoryModalOpen(false);
+      }),
+      {
+        loading: 'Adding category...',
+        success: 'Category added successfully',
+        error: 'Failed to add category'
+      }
+    );
+  };
+
+  if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Menu</h1>
-
-      {isEmpty ? (
-        <div className="flex flex-col items-center justify-center h-[60vh]">
-          <p className="text-gray-500 mb-4">Your menu is empty</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header section */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+            Menu Management
+          </h1>
           <button
-            onClick={handleFirstItemAdd}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2"
+            onClick={() => setIsNewCategoryModalOpen(true)}
+            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
           >
-            <span>+</span> Add Menu Item
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            New Category
           </button>
         </div>
-      ) : (
-        // Show existing menu UI when not empty
-        <>
-          <div className="flex items-center space-x-2 mb-6">
-            <div className="flex-grow flex items-center">
-              <CategoryTabs
-                tabs={tabs}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              />
+
+        <div className="mb-8">
+          <CategoryTabs
+            tabs={tabs}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {/* Add New Item Card */}
+          <div
+            onClick={() => setIsAddItemModalOpen(true)}
+            className="group relative bg-white rounded-2xl shadow-sm hover:shadow-lg p-6 border-2 border-dashed border-gray-300 hover:border-indigo-500 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center min-h-[350px]"
+          >
+            <div className="rounded-full bg-indigo-100 p-4 group-hover:bg-indigo-200 transition-colors duration-200">
+              <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
             </div>
-            <button
-              onClick={() => setIsNewCategoryModalOpen(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center"
-            >
-              <span className="mr-2">+</span> New Category
-            </button>
+            <p className="mt-4 text-lg font-medium text-gray-900">Add New Item</p>
+            <p className="mt-1 text-sm text-gray-500">Click to add a new menu item</p>
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
-            {/* Always show the add button, regardless of active tab */}
-            <div
-              className="flex items-center justify-center border-2 border-dashed border-gray-400 rounded-lg h-72 hover:bg-gray-100 cursor-pointer bg-gray-50"
-              onClick={() => {
-                setNewItem((prev) => ({
-                  ...prev,
-                  category: activeTab === "All" ? "" : activeTab,
-                }));
-                setIsAddItemModalOpen(true);
-              }}
-            >
-              <span className="text-4xl font-light text-gray-600">+</span>
-            </div>
-
-            {Array.isArray(currentItems) &&
-              currentItems.map((item) => (
-                <MenuCard
-                  key={item.menu_item_id}
-                  item={{
-                    id: item.menu_item_id,
-                    menu_item_name: item.menu_item_name,
-                    menu_item_image: item.menu_item_image,
-                    description: item.description,
-                    price: item.price,
-                    category: item.category,
-                  }}
-                  onDelete={handleDeleteItem}
-                />
-              ))}
-          </div>
-        </>
-      )}
+          {currentItems.map((item) => (
+            <MenuCard
+              key={item.menu_item_id}
+              item={item}
+              onEdit={() => handleStartEdit(item)}
+              onDelete={() => toast.promise(
+                deleteItem(item.menu_item_id),
+                {
+                  loading: 'Deleting item...',
+                  success: 'Item deleted successfully',
+                  error: 'Failed to delete item'
+                }
+              )}
+            />
+          ))}
+        </div>
+      </div>
 
       <AddItemModal
         isOpen={isAddItemModalOpen}
-        onClose={() => setIsAddItemModalOpen(false)}
-        onSubmit={handleAddItem}
+        onClose={() => {
+          setIsAddItemModalOpen(false);
+          setEditingItem(null);
+          setNewItem({ title: "", price: "", description: "", image: "", category: "" });
+        }}
+        onSubmit={editingItem ? handleEditItem : handleAddItem}
+        isEditing={!!editingItem}
+        categories={categoryItems}
         newItem={newItem}
         setNewItem={setNewItem}
-        activeTab={activeTab}
         progress={progress}
       />
 
-      {/* Update Category Modal */}
+      {/* New Category Modal */}
       {isNewCategoryModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-6">Add New Category</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-xl transform transition-all">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Category</h2>
             <input
               type="text"
-              className="w-full p-2 border rounded mb-4"
-              placeholder="Category Name"
+              className="w-full p-4 border border-gray-300 rounded-xl mb-6 focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
+              placeholder="Enter category name..."
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
             />
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-4">
               <button
-                onClick={() => {
-                  setNewCategoryName("");
-                  setIsNewCategoryModalOpen(false);
-                }}
-                className="px-4 py-2 bg-gray-200 rounded"
+                onClick={() => setIsNewCategoryModalOpen(false)}
+                className="px-6 py-3 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddCategory}
-                className="px-4 py-2 bg-blue-500 text-white rounded"
+                className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-sm transition-colors duration-200"
               >
-                Add
+                Create Category
               </button>
             </div>
           </div>

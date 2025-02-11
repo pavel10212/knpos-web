@@ -53,16 +53,16 @@ export default function Header({ categories, onCategoryClick }) {
 
         <div className="container mx-auto relative">
           <div className="flex overflow-x-scroll gap-4 no-scrollbar px-8 py-1 scroll-smooth">
-            {categories.map((category, index) => (
+            {categories.map((category) => (
               <button
-                key={index}
-                onClick={() => onCategoryClick(category)}
+                key={category.category_id}
+                onClick={() => onCategoryClick(category.category_id)}
                 className="bg-white text-gray-700 px-6 py-2 rounded-full shadow-md 
                          whitespace-nowrap flex-shrink-0 border border-gray-200
                          transition-all hover:bg-customYellow hover:text-white 
                          hover:border-transparent hover:scale-105"
               >
-                {category}
+                {category.category_name}
               </button>
             ))}
           </div>
