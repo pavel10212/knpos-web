@@ -7,7 +7,7 @@ export default function ReportsLayout({ children }) {
         <Sidebar />
       </div>
       <main className="ml-48 flex-1 p-8 w-full">
-        <div className="max-w-[1200px]">{children}</div>
+        <div className="w-full">{children}</div>
       </main>
     </div>
   );

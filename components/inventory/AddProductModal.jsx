@@ -1,6 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
 
-const AddProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct }) => {
+const AddProductModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  newProduct,
+  setNewProduct,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -17,9 +23,8 @@ const AddProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct 
           exit={{ scale: 0.95, opacity: 0 }}
           className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
         >
-          <div className="p-6 bg-gradient-to-r from-indigo-600 to-blue-600">
+          <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-600">
             <h2 className="text-2xl font-bold text-white">Add New Product</h2>
-            <p className="text-indigo-100 mt-1">Enter the product details below</p>
           </div>
 
           <form onSubmit={onSubmit} className="p-6 space-y-6">
@@ -31,8 +36,13 @@ const AddProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct 
                 <input
                   type="text"
                   value={newProduct.inventory_item_name}
-                  onChange={(e) => setNewProduct({ ...newProduct, inventory_item_name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                  onChange={(e) =>
+                    setNewProduct({
+                      ...newProduct,
+                      inventory_item_name: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   required
                 />
               </div>
@@ -43,8 +53,10 @@ const AddProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct 
                 <input
                   type="text"
                   value={newProduct.category}
-                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, category: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   required
                 />
               </div>
@@ -55,8 +67,10 @@ const AddProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct 
                 <input
                   type="number"
                   value={newProduct.quantity}
-                  onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, quantity: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   required
                 />
               </div>
@@ -67,8 +81,10 @@ const AddProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct 
                 <input
                   type="text"
                   value={newProduct.unit}
-                  onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, unit: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   required
                 />
               </div>
@@ -84,8 +100,13 @@ const AddProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct 
                     type="number"
                     step="0.01"
                     value={newProduct.cost_per_unit}
-                    onChange={(e) => setNewProduct({ ...newProduct, cost_per_unit: e.target.value })}
-                    className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    onChange={(e) =>
+                      setNewProduct({
+                        ...newProduct,
+                        cost_per_unit: e.target.value,
+                      })
+                    }
+                    className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     required
                   />
                 </div>
@@ -97,8 +118,13 @@ const AddProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct 
                 <input
                   type="number"
                   value={newProduct.max_quantity}
-                  onChange={(e) => setNewProduct({ ...newProduct, max_quantity: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                  onChange={(e) =>
+                    setNewProduct({
+                      ...newProduct,
+                      max_quantity: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   required
                 />
               </div>
@@ -114,7 +140,7 @@ const AddProductModal = ({ isOpen, onClose, onSubmit, newProduct, setNewProduct 
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200"
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
               >
                 Add Product
               </button>
