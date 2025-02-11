@@ -3,7 +3,9 @@ import React, { useEffect, useState } from "react";
 import InventoryTable from "@/components/inventory/InventoryTable";
 import AddProductModal from "@/components/inventory/AddProductModal";
 import EditStockModal from "@/components/inventory/EditStockModal";
+import DeleteConfirmationModal from "@/components/inventory/DeleteConfirmationModal";
 import { fetchInventoryData } from '@/services/dataService';
+import { toast } from "sonner";
 
 const Inventory = () => {
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -21,46 +23,59 @@ const Inventory = () => {
     sales_channel: ''
   });
   const [editStock, setEditStock] = useState("");
-
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   console.log(inventoryItems)
 
-
   const loadData = async () => {
-    const data = await fetchInventoryData();
-    setInventoryItems(data);
+    try {
+      const data = await fetchInventoryData();
+      setInventoryItems(data);
+    } catch (error) {
+      toast.error('Failed to load inventory data');
+    }
   }
-
 
   useEffect(() => {
     loadData()
   }, [])
 
+  const handleDeleteClick = (productId) => {
+    setProductToDelete(productId);
+    setIsDeleteModalOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
 
-  const handleDelete = async (productId) => {
-    console.log("Deleting product:", productId);
+    const updatedInventoryItems = inventoryItems.filter((item) => item.inventory_item_id !== productToDelete);
+    const previousItems = [...inventoryItems];
+    setInventoryItems(updatedInventoryItems);
+    sessionStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+    setIsDeleteModalOpen(false);
+    setProductToDelete(null);
+
     try {
       const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-delete`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ id: productId })
+        body: JSON.stringify({ id: productToDelete })
       });
 
       if (!response.ok) {
         throw new Error('Failed to delete product');
       }
-
-      const updatedInventoryItems = inventoryItems.filter((item) => item.inventory_item_id !== productId);
-      setInventoryItems(updatedInventoryItems);
-      sessionStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+      toast.success('Product deleted successfully');
     } catch (error) {
       console.error('Error deleting product:', error);
+      setInventoryItems(previousItems);
+      sessionStorage.setItem('inventoryData', JSON.stringify(previousItems));
+      toast.error('Failed to delete product. Please try again.');
     }
-  }
-
+  };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
@@ -86,37 +101,49 @@ const Inventory = () => {
       setInventoryItems(updatedInventoryItems);
       sessionStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
       setIsEditModalOpen(false);
+      toast.success('Product updated successfully');
     } catch (error) {
       console.error('Error updating product:', error);
+      toast.error('Failed to update product');
     }
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-insert`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newProduct)
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to insert product');
+    const addProductPromise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-insert`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(newProduct)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to insert product');
+        }
+        const addedInventoryItem = await response.json();
+
+        const updatedInventoryItems = [...inventoryItems, ...addedInventoryItem];
+        setInventoryItems(updatedInventoryItems);
+        sessionStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+        setIsModalOpen(false);
+
+        resolve(addedInventoryItem);
+      } catch (error) {
+        reject(error);
       }
-      const addedInventoryItem = await response.json();
+    });
 
-      const updatedInventoryItems = [...inventoryItems, ...addedInventoryItem];
-      setInventoryItems(updatedInventoryItems);
-      sessionStorage.setItem('inventoryData', JSON.stringify(updatedInventoryItems));
+    toast.promise(addProductPromise, {
+      loading: 'Adding new product...',
+      success: 'Product added successfully',
+      error: 'Failed to add new product'
+    });
 
-      setIsModalOpen();
-      return addedInventoryItem;
-    } catch (error) {
-      console.error('Error inserting product:', error);
-    }
+    return addProductPromise;
   };
 
   const handleEdit = (product) => {
@@ -154,10 +181,16 @@ const Inventory = () => {
         setEditStock={setEditStock}
       />
 
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+      />
+
       <InventoryTable
         data={inventoryItems}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={handleDeleteClick}
       />
     </div>
   );

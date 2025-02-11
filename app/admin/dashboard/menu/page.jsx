@@ -8,6 +8,7 @@ import AddItemModal from "@/components/menu/AddItemModal";
 import { S3 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { fetchMenuData } from '@/services/dataService';
+import { toast } from "sonner";
 
 const getUniqueCategories = (menuItems) => {
   const allCategories = Object.values(menuItems)
@@ -49,6 +50,7 @@ const Menu = () => {
       setMenuItems(data);
     } catch (error) {
       console.error("Error fetching menu data:", error);
+      toast.error('Failed to load menu data');
       setMenuItems({});
     }
   }, []);
@@ -128,111 +130,113 @@ const Menu = () => {
 
   const handleAddItem = useCallback(async (e) => {
     e.preventDefault();
-
-    try {
-      if (!newItem.image) {
-        alert('Please select an image');
-        return;
-      }
-
-      const imageUrl = await handleUpload(newItem.image);
-      if (!imageUrl) {
-        throw new Error('Failed to upload image');
-      }
-
-      // Ensure we're sending a plain URL string
-      const menuItemData = {
-        menu_item_name: newItem.title,
-        price: newItem.price,
-        description: newItem.description,
-        category: newItem.category || activeTab,
-        menu_item_image: imageUrl.toString() // Ensure it's a string
-      };
-      console.log('Sending data:', menuItemData); // Debug log
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-insert`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(menuItemData),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to add item");
-      }
-
-      const [addedItem] = await response.json(); // Destructure first item from array
-      console.log('Received response:', addedItem); // Debug log
-
-      // Update the menuItems state properly
-      setMenuItems((prevItems) => {
-        const category = menuItemData.category;
-        const newState = { ...prevItems };
-
-        if (!newState[category]) {
-          newState[category] = [];
+    
+    const addItemPromise = new Promise(async (resolve, reject) => {
+      try {
+        if (!newItem.image) {
+          reject(new Error('Please select an image'));
+          return;
         }
 
-        // Make sure we're storing the plain URL
-        const newItemEntry = {
-          id: addedItem.menu_item_id, // Change this line
-          menu_item_id: addedItem.menu_item_id,
-          menu_item_name: menuItemData.menu_item_name,
-          menu_item_image: menuItemData.menu_item_image, // Store the plain URL
-          description: menuItemData.description,
-          price: menuItemData.price,
-          category: menuItemData.category,
+        const imageUrl = await handleUpload(newItem.image);
+        if (!imageUrl) {
+          reject(new Error('Failed to upload image'));
+          return;
+        }
+
+        const menuItemData = {
+          menu_item_name: newItem.title,
+          price: newItem.price,
+          description: newItem.description,
+          category: newItem.category || activeTab,
+          menu_item_image: imageUrl.toString()
         };
 
-        newState[category] = [...(newState[category] || []), newItemEntry];
+        const response = await fetch(
+          `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-insert`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(menuItemData),
+          }
+        );
 
-        // Store in session storage
-        sessionStorage.setItem("menuData", JSON.stringify(newState));
-        return newState;
-      });
+        if (!response.ok) {
+          throw new Error("Failed to add item");
+        }
 
-      // Reset form
-      setNewItem({
-        title: "",
-        price: "",
-        description: "",
-        image: "",
-        category: "",
-      });
-      setIsAddItemModalOpen(false);
-      setFile(null);
+        const [addedItem] = await response.json();
+        
+        setMenuItems((prevItems) => {
+          const category = menuItemData.category;
+          const newState = { ...prevItems };
+          if (!newState[category]) {
+            newState[category] = [];
+          }
+          newState[category] = [...(newState[category] || []), {
+            id: addedItem.menu_item_id,
+            menu_item_id: addedItem.menu_item_id,
+            menu_item_name: menuItemData.menu_item_name,
+            menu_item_image: menuItemData.menu_item_image,
+            description: menuItemData.description,
+            price: menuItemData.price,
+            category: menuItemData.category,
+          }];
+          sessionStorage.setItem("menuData", JSON.stringify(newState));
+          return newState;
+        });
 
-    } catch (error) {
-      console.error("Error adding menu item:", error);
-    }
+        setNewItem({
+          title: "", price: "", description: "", image: "", category: "",
+        });
+        setIsAddItemModalOpen(false);
+        setFile(null);
+        
+        resolve(addedItem);
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    toast.promise(addItemPromise, {
+      loading: 'Adding menu item...',
+      success: 'Menu item added successfully',
+      error: (err) => `Failed to add menu item: ${err.message}`
+    });
   }, [newItem, activeTab, handleUpload]);
 
   const handleDeleteItem = useCallback(async (itemId) => {
-    try {
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-delete/${itemId}`,
-        { method: 'DELETE' }
-      );
+    const deletePromise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(
+          `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-delete/${itemId}`,
+          { method: 'DELETE' }
+        );
 
-      if (!response.ok) throw new Error('Failed to delete item');
+        if (!response.ok) throw new Error('Failed to delete item');
 
-      setMenuItems((prevItems) => {
-        const newState = { ...prevItems };
-        Object.keys(newState).forEach((category) => {
-          newState[category] = newState[category].filter(
-            (item) => item.menu_item_id !== itemId
-          );
+        setMenuItems((prevItems) => {
+          const newState = { ...prevItems };
+          Object.keys(newState).forEach((category) => {
+            newState[category] = newState[category].filter(
+              (item) => item.menu_item_id !== itemId
+            );
+          });
+          sessionStorage.setItem("menuData", JSON.stringify(newState));
+          return newState;
         });
-        sessionStorage.setItem("menuData", JSON.stringify(newState));
-        return newState;
-      });
-    } catch (error) {
-      console.error('Error deleting item:', error);
-      alert('Failed to delete item');
-    }
+        
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    toast.promise(deletePromise, {
+      loading: 'Deleting menu item...',
+      success: 'Menu item deleted successfully',
+      error: 'Failed to delete menu item'
+    });
   }, []);
 
   const currentItems = useMemo(() =>
@@ -262,38 +266,44 @@ const Menu = () => {
 
   const handleAddCategory = useCallback(async () => {
     if (!newCategoryName.trim()) {
-      alert('Please enter a category name');
+      toast.error('Please enter a category name');
       return;
     }
 
-    try {
-      // Add category to database
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_IP}:3000/category-insert`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ category_name: newCategoryName }),
+    const categoryPromise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(
+          `http://${process.env.NEXT_PUBLIC_IP}:3000/category-insert`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category_name: newCategoryName }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to add category");
         }
-      );
 
-      if (!response.ok) {
-        throw new Error("Failed to add category");
+        setActiveTab(newCategoryName);
+        setIsNewCategoryModalOpen(false);
+        setIsAddItemModalOpen(true);
+        setNewItem(prev => ({
+          ...prev,
+          category: newCategoryName
+        }));
+        
+        resolve();
+      } catch (error) {
+        reject(error);
       }
+    });
 
-      setActiveTab(newCategoryName);
-      setIsNewCategoryModalOpen(false);
-      setIsAddItemModalOpen(true); // Open add item modal after category is created
-      setNewItem(prev => ({
-        ...prev,
-        category: newCategoryName
-      }));
-    } catch (error) {
-      console.error("Error adding category:", error);
-      alert("Failed to add category");
-    }
+    toast.promise(categoryPromise, {
+      loading: 'Adding new category...',
+      success: 'Category added successfully',
+      error: 'Failed to add category'
+    });
   }, [newCategoryName]);
 
   const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);

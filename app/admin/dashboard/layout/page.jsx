@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import TableTemplates from "@/components/layout/TableTemplates";
 import DraggableTable from "@/components/layout/DraggableTable";
 import { fetchTableData } from '@/services/dataService';
+import { toast } from "sonner";
 
 const Layout = () => {
   const [tableCounter, setTableCounter] = useState(1);
@@ -24,9 +25,14 @@ const Layout = () => {
   }
 
   const loadTables = async () => {
-    const data = await fetchTableData();
-    const formattedTables = formatTables(data);
-    setTables(formattedTables);
+    try {
+      const data = await fetchTableData();
+      const formattedTables = formatTables(data);
+      setTables(formattedTables);
+    } catch (error) {
+      console.error("Error loading tables:", error);
+      toast.error('Failed to load table layout');
+    }
   };
 
   useEffect(() => {
@@ -35,43 +41,50 @@ const Layout = () => {
 
   const saveToEC2 = async () => {
     setIsSaving(true);
-    try {
-      const tablesToSave = tables.map((table) => ({
-        table_num: parseInt(table.id),
-        status: "Available",
-        capacity: parseInt(table.type[0]),
-        location: {
-          x: parseInt(table.x),
-          y: parseInt(table.y),
-        },
-        rotation: parseInt(table.rotation),
-      }));
-
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_IP}:3000/table-insert`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+    
+    const savePromise = new Promise(async (resolve, reject) => {
+      try {
+        const tablesToSave = tables.map((table) => ({
+          table_num: parseInt(table.id),
+          status: "Available",
+          capacity: parseInt(table.type[0]),
+          location: {
+            x: parseInt(table.x),
+            y: parseInt(table.y),
           },
-          body: JSON.stringify(tablesToSave),
+          rotation: parseInt(table.rotation),
+        }));
+
+        const response = await fetch(
+          `http://${process.env.NEXT_PUBLIC_IP}:3000/table-insert`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(tablesToSave),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.details || "Failed to save tables");
         }
-      );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || "Failed to save tables");
+        sessionStorage.setItem('tableLayout', JSON.stringify(tablesToSave));
+        resolve();
+      } catch (error) {
+        reject(error);
+      } finally {
+        setIsSaving(false);
       }
+    });
 
-      sessionStorage.setItem('tableLayout', JSON.stringify(tablesToSave))
-
-      console.log("Tables saved successfully");
-    } catch (error) {
-      console.error("Error saving tables:", error);
-      alert(error.message);
-    } finally {
-      setIsSaving(false);
-    }
+    toast.promise(savePromise, {
+      loading: 'Saving table layout...',
+      success: 'Table layout saved successfully',
+      error: (err) => `Failed to save layout: ${err.message}`
+    });
   };
 
   const predefinedTables = [

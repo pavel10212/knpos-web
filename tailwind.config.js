@@ -11,7 +11,7 @@ module.exports = {
         primary: "#FF6B6B",
         secondary: "#4ECDC4",
         customYellow: "#FFC107",
-        titleColour: "#2D3436",
+        titleColour: "#000000",
       },
     },
   },
