@@ -9,9 +9,11 @@ import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
 import { useCartStore } from "@/store/customerStore";
 import { fetchCategoryData } from "@/services/dataService";
+import InventoryItemCard from "@/components/InventoryItemCard";
 
 export default function MenuPage() {
   const [menuItems, setMenuItems] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [error, setError] = useState(null);
@@ -64,8 +66,22 @@ export default function MenuPage() {
     }
   };
 
+  const fetchInventoryData = async () => {
+    try {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-get`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch inventory");
+      }
+      const data = await response.json();
+      setInventoryItems(data);
+    } catch (error) {
+      console.error("Error fetching inventory data:", error);
+    }
+  };
+
   useEffect(() => {
     fetchCategories();
+    fetchInventoryData();
   }, []); 
 
   useEffect(() => {
@@ -136,6 +152,21 @@ export default function MenuPage() {
                           key={item.menu_item_id}
                           {...item}
                           onClick={() => setSelectedItem(item)}
+                        />
+                      ))}
+                    {category.category_name.toLowerCase() === 'beverages' && 
+                      inventoryItems.map((item) => (
+                        <InventoryItemCard
+                          key={`inventory-${item.inventory_item_id}`}
+                          name={item.inventory_item_name}
+                          price={item.cost_per_unit}
+                          onClick={() => setSelectedItem({
+                            menu_item_id: `inventory-${item.inventory_item_id}`,
+                            menu_item_name: item.inventory_item_name,
+                            price: item.cost_per_unit,
+                            description: "",
+                            menu_item_image: ""
+                          })}
                         />
                       ))}
                   </div>
