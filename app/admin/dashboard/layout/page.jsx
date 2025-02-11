@@ -41,7 +41,7 @@ const Layout = () => {
 
   const saveToEC2 = async () => {
     setIsSaving(true);
-    
+
     const savePromise = new Promise(async (resolve, reject) => {
       try {
         const tablesToSave = tables.map((table) => ({
@@ -118,8 +118,8 @@ const Layout = () => {
     if (type === "template") {
       const tableType = e.dataTransfer.getData("tableType");
       const newTable = {
-        id: tableCounter,
-        label: `TABLE ${tableCounter}\n${tableType === "2-seater"
+        id: tables.length + 1,
+        label: `TABLE ${tables.length + 1}\n${tableType === "2-seater"
           ? "FITS 2"
           : tableType === "6-seater"
             ? "FITS 6"
@@ -144,8 +144,44 @@ const Layout = () => {
     }
   };
 
-  const handleRemoveTable = (tableId) => {
-    setTables((prev) => prev.filter((table) => table.id !== tableId));
+  const handleRemoveTable = async (tableId) => {
+    try {
+      const response = await fetch(
+        `http://${process.env.NEXT_PUBLIC_IP}:3000/table-delete/${tableId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete table");
+      }
+
+      // Update state
+      setTables((prev) => {
+        const updatedTables = prev.filter((table) => table.id !== tableId);
+
+        // Update session storage with new table layout
+        const tablesToCache = updatedTables.map((table) => ({
+          table_num: parseInt(table.id),
+          status: "Available",
+          capacity: parseInt(table.type[0]),
+          location: {
+            x: parseInt(table.x),
+            y: parseInt(table.y),
+          },
+          rotation: parseInt(table.rotation),
+        }));
+
+        sessionStorage.setItem('tableLayout', JSON.stringify(tablesToCache));
+        return updatedTables;
+      });
+
+      toast.success("Table deleted successfully");
+    } catch (error) {
+      console.error("Error deleting table:", error);
+      toast.error("Failed to delete table");
+    }
   };
 
   const handleDragOver = (e) => {
