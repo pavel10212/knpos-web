@@ -31,7 +31,6 @@ const Inventory = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
 
-  console.log(inventoryItems);
 
   const loadData = async () => {
     try {

@@ -31,7 +31,6 @@ export default function Orders() {
     const getMenuItems = () => {
       const cachedItems = sessionStorage.getItem('menuData')
       if (!cachedItems) {
-        console.log("No items in cache")
       } else {
         setMenuItems(cachedItems)
       }

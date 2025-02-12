@@ -28,7 +28,6 @@ export default function MenuPage() {
   const fetchData = async () => {
     const storedToken = sessionStorage.getItem('token');
     if (!storedToken) {
-      console.log("No token found in local storage");
       return;
     }
 
