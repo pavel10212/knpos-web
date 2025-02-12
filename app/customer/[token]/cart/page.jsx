@@ -36,7 +36,7 @@ export default function Cart() {
         {cart.length === 0 ? (
           <div className="text-center py-8">
             <p className="mb-4 text-black">Your cart is empty</p>
-            <button onClick={() => router.back()} className="bg-blue-600 text-white px-6 py-2 rounded-full">
+            <button onClick={() => router.back()} className="bg-yellow-500 text-white px-6 py-2 rounded-full">
               Return to Menu
             </button>
           </div>
@@ -108,7 +108,7 @@ export default function Cart() {
       <div className="bg-white shadow-t-md p-4 sticky bottom-0">
         <button
           onClick={handleSendOrder}
-          className="bg-blue-600 text-white w-full py-3 rounded-lg font-bold">
+          className="bg-yellow-500 text-white w-full py-3 rounded-lg font-bold">
           Send order →
         </button>
       </div>

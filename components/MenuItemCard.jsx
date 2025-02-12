@@ -20,9 +20,9 @@ export default function MenuItemCard({ menu_item_name, price, menu_item_image, o
       <div className="p-4">
         <h3 className="font-semibold text-gray-800 mb-2">{menu_item_name}</h3>
         <div className="flex justify-between items-center">
-          <span className="text-primary font-bold text-lg">{price} THB</span>
-          <button className="text-sm text-white bg-blue-600 px-3 py-1 rounded-full 
-                           hover:bg-blue-700 transition-colors">
+          <span className="text-primary underline font-bold text-lg">{price} THB</span>
+          <button className="text-sm text-white bg-customYellow px-3 py-1 rounded-full 
+                           hover:bg-yellow-600 transition-colors">
             Add to cart
           </button>
         </div>

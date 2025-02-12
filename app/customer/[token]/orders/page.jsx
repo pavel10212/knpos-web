@@ -68,7 +68,7 @@ export default function Orders() {
         {orders.length === 0 ? (
           <div className="text-center py-8">
             <p className="mb-4">No orders yet</p>
-            <button onClick={() => router.back()} className="bg-blue-600 text-white px-6 py-2 rounded-full">
+            <button onClick={() => router.back()} className="bg-yellow-500 text-white px-6 py-2 rounded-full">
               Go to Menu
             </button>
           </div>

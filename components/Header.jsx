@@ -25,7 +25,7 @@ export default function Header({ categories, onCategoryClick }) {
       <div className="container mx-auto p-4 flex justify-between items-center">
         <button onClick={() => router.push(basePath)} className="transform text-left transition hover:scale-105">
           <h1 className="text-xl font-bold">
-            <span className="block text-primary">Hinkali</span>
+            <span className="block text-primary1">Hinkali</span>
             <span className="block text-secondary">Georgian</span>
             <span className="block text-titleColour">Restaurant</span>
           </h1>
@@ -36,9 +36,9 @@ export default function Header({ categories, onCategoryClick }) {
           </button>
           <Link
             href={cartPath}
-            className="bg-blue-600 text-white px-4 py-2 rounded-full shadow-md 
+            className="bg-customYellow text-white px-4 py-2 rounded-full shadow-md 
                      flex items-center gap-2 transform transition-all hover:scale-105 
-                     hover:bg-blue-700"
+                     hover:bg-yellow-600"
           >
             <i className="fas fa-shopping-cart"></i>
             <span className="font-medium">Cart ({cartItemCount})</span>
@@ -59,7 +59,7 @@ export default function Header({ categories, onCategoryClick }) {
                 onClick={() => onCategoryClick(category.category_id)}
                 className="bg-white text-gray-700 px-6 py-2 rounded-full shadow-md 
                          whitespace-nowrap flex-shrink-0 border border-gray-200
-                         transition-all hover:bg-blue-600 hover:text-white 
+                         transition-all hover:bg-customYellow hover:text-white 
                          hover:border-transparent hover:scale-105"
               >
                 {category.category_name}
