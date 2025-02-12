@@ -34,6 +34,7 @@ const Menu = () => {
     deleteItem,
     addCategory,
     editItem,
+    deleteCategory,
   } = useMenu();
 
   const handleAddItem = async (e) => {
@@ -123,6 +124,23 @@ const Menu = () => {
     );
   };
 
+  const handleDeleteCategory = async (categoryId, categoryName) => {
+    if (categoryName === "All") return;
+
+    if (
+      confirm(
+        `Are you sure you want to delete the category "${categoryName}"? 
+        All items under this category will be deleted.`
+      )
+    ) {
+      toast.promise(deleteCategory(categoryId), {
+        loading: "Deleting category...",
+        success: "Category deleted successfully",
+        error: "Failed to delete category",
+      });
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -155,11 +173,47 @@ const Menu = () => {
         </div>
 
         <div className="mb-8">
-          <CategoryTabs
-            tabs={tabs}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-          />
+          <div className="flex flex-wrap gap-2">
+            {tabs.map((tab) => {
+              const category = categoryItems.find(
+                (cat) => cat.category_name === tab
+              );
+              return (
+                <div key={tab} className="relative group">
+                  <button
+                    className={`px-4 py-2 ${
+                      activeTab === tab
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    } rounded-lg transition-colors duration-200`}
+                    onClick={() => setActiveTab(tab)}
+                  >
+                    {tab}
+                  </button>
+                  {tab !== "All" && (
+                    <button
+                      onClick={() =>
+                        handleDeleteCategory(category.category_id, tab)
+                      }
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

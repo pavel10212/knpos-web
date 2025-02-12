@@ -162,6 +162,33 @@ export const insertCategory = async (category_name) => {
   }
 };
 
+export const deleteCategory = async (category_id) => {
+  try {
+    const response = await fetch("/api/categories/delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category_id }),
+    });
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.details || "Failed to delete category");
+      }
+      return data;
+    } else {
+      if (!response.ok) {
+        throw new Error("Failed to delete category");
+      }
+      return true;
+    }
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    throw error;
+  }
+};
+
 export const fetchInventoryData = async () => {
   try {
     const cachedData = sessionStorage.getItem("inventoryData");

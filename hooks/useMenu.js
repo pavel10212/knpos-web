@@ -7,6 +7,7 @@ import {
   insertMenuItem,
   deleteMenuItem,
   updateMenuItem,
+  deleteCategory,
 } from "@/services/dataService";
 import { uploadFile } from "@/services/uploadService";
 
@@ -61,24 +62,22 @@ export const useMenu = () => {
   const editItem = useCallback(async (itemId, updatedItem) => {
     try {
       let imageUrl = updatedItem.imageUrl;
-      
+
       // If there's a new image, upload it
       if (updatedItem.image instanceof File) {
         imageUrl = await uploadFile(updatedItem.image, updatedItem.onProgress);
       }
 
-      const menuItem = await updateMenuItem({ 
+      const menuItem = await updateMenuItem({
         ...updatedItem,
         id: itemId,
-        imageUrl 
+        imageUrl,
       });
 
-      setMenuItems(prev => 
-        prev.map(item => 
-          item.menu_item_id === itemId ? menuItem : item
-        )
+      setMenuItems((prev) =>
+        prev.map((item) => (item.menu_item_id === itemId ? menuItem : item))
       );
-      
+
       return menuItem;
     } catch (error) {
       throw new Error("Failed to update item");
@@ -95,6 +94,23 @@ export const useMenu = () => {
     } catch (error) {
       console.error("Error adding category:", error);
       toast.error("Failed to add category");
+    }
+  }, []);
+
+  const handleDeleteCategory = useCallback(async (categoryId) => {
+    try {
+      const result = await deleteCategory(categoryId);
+      if (result) {
+        setCategoryItems((prev) =>
+          prev.filter((cat) => cat.category_id !== categoryId)
+        );
+        setActiveTab("All");
+        return true;
+      }
+      throw new Error("Failed to delete category");
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      throw error;
     }
   }, []);
 
@@ -123,5 +139,6 @@ export const useMenu = () => {
     deleteItem,
     addCategory,
     editItem,
+    deleteCategory: handleDeleteCategory,
   };
 };
