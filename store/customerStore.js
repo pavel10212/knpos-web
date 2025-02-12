@@ -5,11 +5,11 @@ const fetchTableNumber = async (token) => {
   if (cachedTableNum) return cachedTableNum;
 
   try {
-    const response = await fetch(`/api/table?token=${token}`);
+    const response = await fetch(`/api/find-table/?token=${token}`);
     if (!response.ok) throw new Error("Failed to fetch table number");
 
     const data = await response.json();
-    const tableNum = data[0].table_num;
+    const tableNum = data.table_num;
     sessionStorage.setItem("table_num", tableNum);
     return tableNum;
   } catch (error) {
@@ -68,6 +68,7 @@ export const useCartStore = create((set, get) => ({
   saveOrder: async (cart, total, token) => {
     try {
       const tableNum = await fetchTableNumber(token);
+      console.log("tableNum", tableNum);
 
       const orderDetails = {
         table_num: tableNum.toString(),

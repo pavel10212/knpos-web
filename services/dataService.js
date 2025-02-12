@@ -1,13 +1,4 @@
 // Customer-facing API calls
-export const fetchCustomerMenu = async (token) => {
-  try {
-    const response = await fetch("/api/menu/get");
-    if (!response.ok) throw new Error("Failed to fetch menu");
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
-};
 
 export const fetchCustomerOrders = async (table_num, token) => {
   try {

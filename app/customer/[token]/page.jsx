@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
 import { useCartStore } from "@/store/customerStore";
-import { fetchCategoryData, fetchCustomerMenu, fetchInventoryItem } from "@/services/dataService";
+import { fetchCategoryData, fetchCustomerMenu, fetchInventoryItem, fetchMenuData } from "@/services/dataService";
 import InventoryItemCard from "@/components/InventoryItemCard";
 
 export default function MenuPage() {
@@ -32,8 +32,8 @@ export default function MenuPage() {
     }
 
     try {
-      const data = await fetchCustomerMenu(storedToken);
-      setMenuItems(data.menuItems || []);
+      const data = await fetchMenuData();
+      setMenuItems(data || []);
     } catch (error) {
       console.error("Error fetching menu data:", error);
       if (error.message.includes('401') || error.message.includes('403')) {
@@ -66,7 +66,7 @@ export default function MenuPage() {
   useEffect(() => {
     fetchCategories();
     fetchInventoryData();
-  }, []); 
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -138,7 +138,7 @@ export default function MenuPage() {
                           onClick={() => setSelectedItem(item)}
                         />
                       ))}
-                    {category.category_name.toLowerCase() === 'beverages' && 
+                    {category.category_name.toLowerCase() === 'beverages' &&
                       inventoryItems.map((item) => (
                         <InventoryItemCard
                           key={`inventory-${item.inventory_item_id}`}
