@@ -4,7 +4,12 @@ import InventoryTable from "@/components/inventory/InventoryTable";
 import AddProductModal from "@/components/inventory/AddProductModal";
 import EditStockModal from "@/components/inventory/EditStockModal";
 import DeleteConfirmationModal from "@/components/inventory/DeleteConfirmationModal";
-import { fetchInventoryData } from "@/services/dataService";
+import { 
+  fetchInventoryData, 
+  createInventoryItem, 
+  updateInventoryItem, 
+  deleteInventoryItem 
+} from "@/services/dataService";
 import { toast } from "sonner";
 
 const Inventory = () => {
@@ -62,20 +67,7 @@ const Inventory = () => {
     setProductToDelete(null);
 
     try {
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-delete`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id: productToDelete }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete product");
-      }
+      await deleteInventoryItem(productToDelete);
       toast.success("Product deleted successfully");
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -88,24 +80,7 @@ const Inventory = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-update`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...editStock,
-            inventory_item_id: selectedProduct.inventory_item_id,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to update product");
-      }
-
+      await updateInventoryItem(editStock, selectedProduct.inventory_item_id);
       const updatedInventoryItems = inventoryItems.map((item) =>
         item.inventory_item_id === selectedProduct.inventory_item_id
           ? editStock
@@ -127,24 +102,8 @@ const Inventory = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const addProductPromise = new Promise(async (resolve, reject) => {
-      try {
-        const response = await fetch(
-          `http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-insert`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(newProduct),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to insert product");
-        }
-        const addedInventoryItem = await response.json();
-
+    const addProductPromise = createInventoryItem(newProduct)
+      .then((addedInventoryItem) => {
         const updatedInventoryItems = [
           ...inventoryItems,
           ...addedInventoryItem,
@@ -155,12 +114,8 @@ const Inventory = () => {
           JSON.stringify(updatedInventoryItems)
         );
         setIsModalOpen(false);
-
-        resolve(addedInventoryItem);
-      } catch (error) {
-        reject(error);
-      }
-    });
+        return addedInventoryItem;
+      });
 
     toast.promise(addProductPromise, {
       loading: "Adding new product...",

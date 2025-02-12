@@ -5,9 +5,7 @@ const fetchTableNumber = async (token) => {
   if (cachedTableNum) return cachedTableNum;
 
   try {
-    const response = await fetch(
-      `http://${process.env.NEXT_PUBLIC_IP}:3000/find-table?token=${token}`
-    );
+    const response = await fetch(`/api/table?token=${token}`);
     if (!response.ok) throw new Error("Failed to fetch table number");
 
     const data = await response.json();
@@ -36,7 +34,7 @@ export const useCartStore = create((set, get) => ({
         .map(() => ({
           ...item,
           request,
-          cartItemId: Math.random().toString(36).substr(2, 9), 
+          cartItemId: Math.random().toString(36).substr(2, 9),
         }));
       return { cart: [...state.cart, ...newItems] };
     }),
@@ -78,40 +76,36 @@ export const useCartStore = create((set, get) => ({
         order_date_time: new Date().toISOString(),
         completion_date_time: null,
         order_details: JSON.stringify(
-          cart.map((item) => {
-            if (item.isInventoryItem) {
-              return {
-                inventory_item_id: item.inventory_item_id,
-                type: "inventory",
-                status: "pending",
-                quantity: 1,
-                request: item.request,
-                unit_price: item.cost_per_unit,
-              };
-            }
-            return {
-              menu_item_id: item.menu_item_id,
-              type: "menu",
-              status: "pending",
-              quantity: 1,
-              request: item.request,
-              unit_price: item.price,
-            };
-          })
+          cart.map((item) => ({
+            ...(item.isInventoryItem
+              ? {
+                  inventory_item_id: item.inventory_item_id,
+                  type: "inventory",
+                  status: "pending",
+                  quantity: 1,
+                  request: item.request,
+                  unit_price: item.cost_per_unit,
+                }
+              : {
+                  menu_item_id: item.menu_item_id,
+                  type: "menu",
+                  status: "pending",
+                  quantity: 1,
+                  request: item.request,
+                  unit_price: item.price,
+                }),
+          }))
         ),
       };
 
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_IP}:3000/orders-insert`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(orderDetails),
-        }
-      );
+      const response = await fetch("/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderDetails),
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to send order: ${response.statusText}`);

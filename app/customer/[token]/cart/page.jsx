@@ -5,11 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from 'react';
 
-const truncateText = (text, maxLength) => {
-  if (!text) return '';
-  return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
-};
-
 export default function Cart() {
   const cart = useCartStore((state) => state.cart);
   const calculateTotal = useCartStore((state) => state.calculateTotal);

@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
 import { useCartStore } from "@/store/customerStore";
-import { fetchCategoryData } from "@/services/dataService";
+import { fetchCategoryData, fetchCustomerMenu, fetchInventoryItem } from "@/services/dataService";
 import InventoryItemCard from "@/components/InventoryItemCard";
 
 export default function MenuPage() {
@@ -27,33 +27,22 @@ export default function MenuPage() {
 
   const fetchData = async () => {
     const storedToken = sessionStorage.getItem('token');
-
     if (!storedToken) {
       console.log("No token found in local storage");
       return;
     }
 
     try {
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`, {
-        headers: {
-          'Authorization': `Bearer ${storedToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          sessionStorage.removeItem('token');
-          setError("Session expired or invalid token. Please request a new table link.");
-          return;
-        }
-        throw new Error("Failed to fetch menu");
-      }
-
-      const data = await response.json();
+      const data = await fetchCustomerMenu(storedToken);
       setMenuItems(data.menuItems || []);
     } catch (error) {
       console.error("Error fetching menu data:", error);
-      setError("Connection error. Please check your network and try again.");
+      if (error.message.includes('401') || error.message.includes('403')) {
+        sessionStorage.removeItem('token');
+        setError("Session expired or invalid token. Please request a new table link.");
+      } else {
+        setError("Connection error. Please check your network and try again.");
+      }
     }
   };
 
@@ -68,11 +57,7 @@ export default function MenuPage() {
 
   const fetchInventoryData = async () => {
     try {
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_IP}:3000/inventory-get`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch inventory");
-      }
-      const data = await response.json();
+      const data = await fetchInventoryItem();
       setInventoryItems(data);
     } catch (error) {
       console.error("Error fetching inventory data:", error);

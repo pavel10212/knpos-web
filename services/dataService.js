@@ -1,4 +1,104 @@
-const BASE_URL = `http://${process.env.NEXT_PUBLIC_IP}:3000`;
+// Customer-facing API calls
+export const fetchCustomerMenu = async (token) => {
+  try {
+    const response = await fetch("/api/menu/get");
+    if (!response.ok) throw new Error("Failed to fetch menu");
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchCustomerOrders = async (table_num, token) => {
+  try {
+    const response = await fetch(`/api/orders/get/?table_num=${table_num}`);
+    if (!response.ok) throw new Error("Failed to fetch orders");
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createOrder = async (orderDetails, token) => {
+  try {
+    const response = await fetch("/api/orders/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(orderDetails),
+    });
+    if (!response.ok) throw new Error("Failed to create order");
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Admin-facing API calls
+export const fetchInventoryItem = async () => {
+  try {
+    const response = await fetch("/api/inventory/get");
+    if (!response.ok) throw new Error("Failed to fetch inventory");
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createInventoryItem = async (newProduct) => {
+  try {
+    const response = await fetch("/api/inventory/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newProduct),
+    });
+    if (!response.ok) throw new Error("Failed to create inventory item");
+    return await response.json();
+  } catch (error) {
+    console.error("Error creating inventory item:", error);
+    throw error;
+  }
+};
+
+export const updateInventoryItem = async (editStock, itemId) => {
+  try {
+    const response = await fetch("/api/inventory/update", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...editStock,
+        inventory_item_id: itemId,
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || "Failed to update inventory item");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating inventory item:", error);
+    throw error;
+  }
+};
+
+export const deleteInventoryItem = async (itemId) => {
+  try {
+    const response = await fetch("/api/inventory/delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: itemId }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || "Failed to delete inventory item");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error deleting inventory item:", error);
+    throw error;
+  }
+};
 
 export const fetchMenuData = async () => {
   try {
@@ -7,9 +107,8 @@ export const fetchMenuData = async () => {
       return JSON.parse(cachedData);
     }
 
-    const response = await fetch(`${BASE_URL}/admin-menu-get`);
+    const response = await fetch("/api/menu-items/get");
     const data = await response.json();
-
     sessionStorage.setItem("menuData", JSON.stringify(data));
     return data;
   } catch (error) {
@@ -25,10 +124,7 @@ export const fetchTableData = async () => {
       return JSON.parse(cachedLayout);
     }
 
-    const response = await fetch(`${BASE_URL}/table-get`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch tables");
-    }
+    const response = await fetch("/api/tables/get");
     const data = await response.json();
     sessionStorage.setItem("tableLayout", JSON.stringify(data));
     return data;
@@ -44,10 +140,7 @@ export const fetchCategoryData = async () => {
     if (cachedData) {
       return JSON.parse(cachedData);
     }
-    const response = await fetch(`${BASE_URL}/category-get`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch categories");
-    }
+    const response = await fetch("/api/categories/get");
     const data = await response.json();
     sessionStorage.setItem("categoryData", JSON.stringify(data));
     return data;
@@ -59,7 +152,7 @@ export const fetchCategoryData = async () => {
 
 export const insertCategory = async (category_name) => {
   try {
-    const response = await fetch(`${BASE_URL}/category-insert`, {
+    const response = await fetch("/api/categories/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category_name }),
@@ -70,7 +163,6 @@ export const insertCategory = async (category_name) => {
       throw new Error(error.details || "Failed to insert category");
     }
 
-    // Clear cached data to force refresh
     sessionStorage.removeItem("categoryData");
     return await response.json();
   } catch (error) {
@@ -86,7 +178,7 @@ export const fetchInventoryData = async () => {
       return JSON.parse(cachedData);
     }
 
-    const response = await fetch(`${BASE_URL}/inventory-get`);
+    const response = await fetch("/api/inventory/get");
     const data = await response.json();
     sessionStorage.setItem("inventoryData", JSON.stringify(data));
     return data;
@@ -103,7 +195,7 @@ export const fetchOrderData = async () => {
       return JSON.parse(cachedData);
     }
 
-    const response = await fetch(`${BASE_URL}/orders-get`);
+    const response = await fetch("/api/orders/get");
     const data = await response.json();
     sessionStorage.setItem("orderData", JSON.stringify(data));
     return data;
@@ -123,7 +215,7 @@ export const saveTableLayout = async (tables) => {
       rotation: parseInt(table.rotation),
     }));
 
-    const response = await fetch(`${BASE_URL}/table-insert`, {
+    const response = await fetch("/api/tables/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(tablesToSave),
@@ -142,17 +234,19 @@ export const saveTableLayout = async (tables) => {
   }
 };
 
-export const deleteTable = async (tableId) => {
+export const deleteTable = async (table_num) => {
   try {
-    const response = await fetch(`${BASE_URL}/table-delete/${tableId}`, {
+    const response = await fetch("/api/tables/delete", {
       method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table_num }),
     });
 
     if (!response.ok) {
-      throw new Error("Failed to delete table");
+      const error = await response.json();
+      throw new Error(error.details || "Failed to delete table");
     }
 
-    // Clear cached layout to force refresh
     sessionStorage.removeItem("tableLayout");
     return true;
   } catch (error) {
@@ -163,7 +257,7 @@ export const deleteTable = async (tableId) => {
 
 export const insertMenuItem = async (menuItem) => {
   try {
-    const response = await fetch(`${BASE_URL}/menu-insert`, {
+    const response = await fetch("/api/menu-items/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -179,7 +273,6 @@ export const insertMenuItem = async (menuItem) => {
       throw new Error("Failed to save menu item");
     }
 
-    // Clear cached data to force refresh
     sessionStorage.removeItem("menuData");
     return await response.json();
   } catch (error) {
@@ -190,7 +283,7 @@ export const insertMenuItem = async (menuItem) => {
 
 export const updateMenuItem = async (menuItem) => {
   try {
-    const response = await fetch(`${BASE_URL}/menu-update`, {
+    const response = await fetch("/api/menu-items/update", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -207,9 +300,7 @@ export const updateMenuItem = async (menuItem) => {
       throw new Error("Failed to update menu item");
     }
 
-    // Clear cached data to force refresh
     sessionStorage.removeItem("menuData");
-
     return await response.json();
   } catch (error) {
     console.error("Error updating menu item:", error);
@@ -219,15 +310,17 @@ export const updateMenuItem = async (menuItem) => {
 
 export const deleteMenuItem = async (itemId) => {
   try {
-    const response = await fetch(`${BASE_URL}/menu-delete/${itemId}`, {
+    const response = await fetch("/api/menu-items/delete", {
       method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId }),
     });
 
     if (!response.ok) {
-      throw new Error("Delete failed");
+      const error = await response.json();
+      throw new Error(error.details || "Delete failed");
     }
 
-    // Clear cached data to force refresh
     sessionStorage.removeItem("menuData");
     return true;
   } catch (error) {

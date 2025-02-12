@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/customerStore";
+import { fetchCustomerOrders } from "@/services/dataService";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -12,31 +13,18 @@ export default function Orders() {
   const { userToken } = useUserStore();
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const loadOrders = async () => {
+      if (!userToken || !table_num) return;
+
       try {
-        const response = await fetch(
-          `http://${process.env.NEXT_PUBLIC_IP}:3000/orders-for-table?table_num=${table_num}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${userToken}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch orders: ${response.statusText}`);
-        }
-
-        const data = await response.json();
+        const data = await fetchCustomerOrders(table_num, userToken);
         setOrders(data);
       } catch (error) {
         console.error("Error fetching orders:", error);
       }
     };
 
-    if (userToken && table_num) {
-      fetchOrders();
-    }
+    loadOrders();
   }, [userToken, table_num]);
 
   useEffect(() => {
