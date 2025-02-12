@@ -4,7 +4,7 @@ const InventoryItemCard = ({ name, price, onClick }) => {
   return (
     <div 
       onClick={onClick}
-      className="bg-gray-300 rounded-xl shadow-custom overflow-hidden cursor-pointer 
+      className="bg-gray-50 rounded-xl shadow-custom overflow-hidden cursor-pointer 
                  transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
     >
       <div className="relative">
@@ -28,8 +28,8 @@ const InventoryItemCard = ({ name, price, onClick }) => {
         <h3 className="font-semibold text-gray-800 mb-2">{name}</h3>
         <div className="flex justify-between items-center">
           <span className="text-primary font-bold text-lg">{price} THB</span>
-          <button className="text-sm text-white bg-customYellow px-3 py-1 rounded-full 
-                           hover:bg-yellow-600 transition-colors">
+          <button className="text-sm text-white bg-blue-600 px-3 py-1 rounded-full 
+                           hover:bg-blue-700 transition-colors">
             Add to cart
           </button>
         </div>

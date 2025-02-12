@@ -36,9 +36,9 @@ export default function Header({ categories, onCategoryClick }) {
           </button>
           <Link
             href={cartPath}
-            className="bg-customYellow text-white px-4 py-2 rounded-full shadow-md 
+            className="bg-blue-600 text-white px-4 py-2 rounded-full shadow-md 
                      flex items-center gap-2 transform transition-all hover:scale-105 
-                     hover:bg-yellow-600"
+                     hover:bg-blue-700"
           >
             <i className="fas fa-shopping-cart"></i>
             <span className="font-medium">Cart ({cartItemCount})</span>
@@ -59,7 +59,7 @@ export default function Header({ categories, onCategoryClick }) {
                 onClick={() => onCategoryClick(category.category_id)}
                 className="bg-white text-gray-700 px-6 py-2 rounded-full shadow-md 
                          whitespace-nowrap flex-shrink-0 border border-gray-200
-                         transition-all hover:bg-customYellow hover:text-white 
+                         transition-all hover:bg-blue-600 hover:text-white 
                          hover:border-transparent hover:scale-105"
               >
                 {category.category_name}

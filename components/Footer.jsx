@@ -9,7 +9,7 @@ export default function Footer() {
     <footer className="bg-white text-white fixed bottom-0 w-full p-4 shadow-lg flex justify-center z-50">
       <button
         onClick={handleCallWaiter}
-        className="bg-customYellow text-black px-6 py-2 rounded-full shadow-md hover:bg-customYellow hover:text-white transition-all flex items-center gap-2 border border-customYellow"
+        className="bg-blue-600 text-white px-6 py-2 rounded-full shadow-md hover:bg-blue-700 hover:text-white transition-all flex items-center gap-2 border border-blue-700"
       >
         <i className="fas fa-bell"></i> Call Waiter
       </button>
