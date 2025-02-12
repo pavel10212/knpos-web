@@ -10,6 +10,8 @@ import OrdersChart from "@/components/OrdersChart";
 import ChartPeriodSelector from "@/components/ChartPeriodSelector";
 import MonthlyRevenueChart from "@/components/MonthlyRevenueChart";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+import PeakSalesHoursChart from "@/components/PeakSalesHoursChart";
+import CategorySalesChart from "@/components/CategorySalesChart";
 
 const Reports = () => {
   const [data, setData] = useState({ orders: [], menuItems: [] });
@@ -41,6 +43,8 @@ const Reports = () => {
         totalOrders: 0,
         averageOrder: 0,
         todayOrderCount: 0,
+        averageTurnoverTime: 0,
+        totalSales: 0,
       };
 
     const today = new Date();
@@ -53,6 +57,20 @@ const Reports = () => {
       );
     });
 
+    // Calculate average turnover time
+    const totalTurnoverTime = orders.reduce((total, order) => {
+      const startTime = new Date(order.startTime);
+      const endTime = new Date(order.endTime);
+      return total + (endTime - startTime);
+    }, 0);
+    const averageTurnoverMinutes = totalTurnoverTime / orders.length / 60000;
+
+    // Calculate total sales
+    const totalSales = orders.reduce(
+      (acc, order) => acc + order.total_amount,
+      0
+    );
+
     return {
       dailySales: todayOrders.reduce(
         (acc, order) => acc + order.total_amount,
@@ -63,7 +81,42 @@ const Reports = () => {
         orders.reduce((acc, order) => acc + order.total_amount, 0) /
         orders.length,
       todayOrderCount: todayOrders.length,
+      averageTurnoverTime: averageTurnoverMinutes,
+      totalSales,
     };
+  }, [data]);
+
+  const categorySalesData = useMemo(() => {
+    const { orders, menuItems } = data;
+    const categoryMap = new Map();
+
+    if (!orders?.length || !menuItems?.length) {
+      return [];
+    }
+
+    orders.forEach((order) => {
+      if (!order.items || !Array.isArray(order.items)) {
+        return;
+      }
+
+      order.items.forEach((item) => {
+        if (!item?.menu_item_id || !item?.price || !item?.quantity) {
+          return;
+        }
+
+        const menuItem = menuItems.find((mi) => mi.id === item.menu_item_id);
+        if (menuItem?.category) {
+          const currentAmount = categoryMap.get(menuItem.category) || 0;
+          const itemAmount = item.price * item.quantity;
+          categoryMap.set(menuItem.category, currentAmount + itemAmount);
+        }
+      });
+    });
+
+    return Array.from(categoryMap.entries()).map(([category, amount]) => ({
+      category,
+      amount,
+    }));
   }, [data]);
 
   if (isLoading) {
@@ -83,7 +136,7 @@ const Reports = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
           <StatsCard
             title="Today's Orders"
             value={stats.todayOrderCount.toString()}
@@ -142,6 +195,25 @@ const Reports = () => {
             }
           />
           <StatsCard
+            title="Total Sales"
+            value={`$${stats.totalSales.toFixed(2)}`}
+            icon={
+              <svg
+                className="w-6 h-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 12H4m16 0a8 8 0 11-16 0 8 8 0 0116 0z"
+                />
+              </svg>
+            }
+          />
+          <StatsCard
             title="Average Order"
             value={`$${stats.averageOrder.toFixed(2)}`}
             icon={
@@ -161,11 +233,11 @@ const Reports = () => {
             }
           />
           <StatsCard
-            title="Total Customers"
-            value={stats.totalOrders.toString()}
+            title="Avg. Table Time"
+            value={`${stats.averageTurnoverTime.toFixed(0)} min`}
             icon={
               <svg
-                className="w-6 h-6 text-orange-600"
+                className="w-6 h-6 text-teal-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -174,7 +246,7 @@ const Reports = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
             }
@@ -210,6 +282,17 @@ const Reports = () => {
 
           <div className="bg-white rounded-2xl shadow-sm">
             <PopularItems orders={data.orders} menuItems={data.menuItems} />
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Peak Sales Hours
+            </h2>
+            <PeakSalesHoursChart orders={data.orders} />
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <CategorySalesChart salesData={categorySalesData} />
           </div>
         </div>
       </div>
