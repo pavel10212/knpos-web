@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
 import { useCartStore } from "@/store/customerStore";
-import { fetchCategoryData, fetchCustomerMenu, fetchInventoryItem, fetchMenuData } from "@/services/dataService";
+import { fetchCategoryData, fetchInventoryItem, fetchMenuData } from "@/services/dataService";
 import InventoryItemCard from "@/components/InventoryItemCard";
 
 export default function MenuPage() {

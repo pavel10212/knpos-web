@@ -9,7 +9,6 @@ export async function GET() {
       }
     );
     const data = await response.json();
-    console.log("data", data);
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

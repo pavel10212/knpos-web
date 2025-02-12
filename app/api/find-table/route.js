@@ -5,7 +5,13 @@ export async function GET(request) {
   const token = searchParams.get("token");
 
   if (!token) {
-    return NextResponse.json({ error: "Token is required" }, { status: 400 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Token is required",
+      },
+      { status: 400 }
+    );
   }
 
   try {
@@ -18,18 +24,26 @@ export async function GET(request) {
       }
     );
 
+    const data = await response.json();
+
     if (!response.ok) {
       return NextResponse.json(
-        { error: "Failed to fetch table number" },
+        {
+          success: false,
+          error: data.error || "Failed to fetch table",
+        },
         { status: response.status }
       );
     }
 
-    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
+    console.error("Error finding table:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        success: false,
+        error: "Internal server error",
+      },
       { status: 500 }
     );
   }
