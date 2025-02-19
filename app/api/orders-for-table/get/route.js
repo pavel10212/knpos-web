@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 
-export async function GET(req) {
-  const token = req.headers.get("table-token");
-
+export async function GET(request) {
   try {
     const response = await fetch(
-      `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`,
+      `http://${
+        process.env.NEXT_PUBLIC_IP
+      }:3000/orders-for-table?table_token=${request.headers.get(
+        "table-token"
+      )}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.ADMIN_API_KEY}`,
-          "Table-Token": token || "",
+          "table-token": request.headers.get("table-token"),
         },
       }
     );

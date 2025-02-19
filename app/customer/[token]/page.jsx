@@ -7,37 +7,63 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
-import { useCartStore } from "@/store/customerStore";
-import { fetchCategoryData, fetchInventoryItem, fetchMenuData } from "@/services/dataService";
+import { useCartStore, useDataStore } from "@/store/customerStore";
+import { fetchCategoryData, fetchMenuData } from "@/services/dataService";
 import InventoryItemCard from "@/components/InventoryItemCard";
 
 export default function MenuPage() {
-  const [menuItems, setMenuItems] = useState([]);
-  const [inventoryItems, setInventoryItems] = useState([]);
+  const [dataItems, setDataItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [error, setError] = useState(null);
+  const [token, setToken] = useState(null);
   const categoryRefs = useRef({});
   const { addToCart } = useCartStore();
-  const params = useParams()
-  const dirtyToken = params.token;
-  const token = dirtyToken.replace('token%3D', '')
+  const params = useParams();
+  const setMenuItems = useDataStore((state) => state.setMenuItems);
+  const setInventoryItems = useDataStore((state) => state.setInventoryItems);
+  const setCategoryItems = useDataStore((state) => state.setCategoryItems);
 
-  sessionStorage.setItem('token', token);
+  useEffect(() => {
+    const dirtyToken = params.token;
+    const cleanToken = dirtyToken.replace('token%3D', '');
+    setToken(cleanToken);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('token', cleanToken);
+    }
+  }, [params.token]);
 
   const fetchData = async () => {
-    const storedToken = sessionStorage.getItem('token');
-    if (!storedToken) {
-      return;
+    if (!token) return;
+
+    // Try to get data from sessionStorage first
+    if (typeof window !== 'undefined') {
+      const cachedMenuData = sessionStorage.getItem('menuData');
+      if (cachedMenuData) {
+        const parsedData = JSON.parse(cachedMenuData);
+        setDataItems(parsedData);
+        setMenuItems(parsedData.menuItems || []);
+        setInventoryItems(parsedData.inventoryItems || []);
+        return;
+      }
     }
 
     try {
-      const data = await fetchMenuData();
-      setMenuItems(data || []);
+      const data = await fetchMenuData(token);
+      setDataItems(data || []);
+      setMenuItems(data.menuItems || []);
+      setInventoryItems(data.inventoryItems || []);
+
+      // Store in sessionStorage
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('menuData', JSON.stringify(data));
+      }
     } catch (error) {
       console.error("Error fetching menu data:", error);
       if (error.message.includes('401') || error.message.includes('403')) {
-        sessionStorage.removeItem('token');
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('token');
+        }
         setError("Session expired or invalid token. Please request a new table link.");
       } else {
         setError("Connection error. Please check your network and try again.");
@@ -46,33 +72,39 @@ export default function MenuPage() {
   };
 
   const fetchCategories = async () => {
+    // Try to get categories from sessionStorage first
+    if (typeof window !== 'undefined') {
+      const cachedCategories = sessionStorage.getItem('categories');
+      if (cachedCategories) {
+        const parsedCategories = JSON.parse(cachedCategories);
+        setCategories(parsedCategories);
+        setCategoryItems(parsedCategories);
+        return;
+      }
+    }
+
     try {
       const categoryData = await fetchCategoryData();
       setCategories(categoryData);
+      setCategoryItems(categoryData);
+
+      // Store in sessionStorage
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('categories', JSON.stringify(categoryData));
+      }
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
 
-  const fetchInventoryData = async () => {
-    try {
-      const data = await fetchInventoryItem();
-      setInventoryItems(data);
-    } catch (error) {
-      console.error("Error fetching inventory data:", error);
-    }
-  };
-
   useEffect(() => {
     fetchCategories();
-    fetchInventoryData();
   }, []);
 
   useEffect(() => {
     if (token) {
-      sessionStorage.setItem('token', token);
+      fetchData();
     }
-    fetchData();
   }, [token]);
 
   const handleCategoryClick = (categoryId) => {
@@ -129,8 +161,7 @@ export default function MenuPage() {
                 >
                   <h2 className="text-xl font-bold text-gray-800 mb-4">{category.category_name}</h2>
                   <div className="grid grid-cols-2 gap-4">
-                    {menuItems
-                      .filter((item) => item.category_id === category.category_id)
+                    {dataItems?.menuItems?.filter((item) => item.category_id === category.category_id)
                       .map((item) => (
                         <MenuItemCard
                           key={item.menu_item_id}
@@ -139,7 +170,7 @@ export default function MenuPage() {
                         />
                       ))}
                     {category.category_name.toLowerCase() === 'beverages' &&
-                      inventoryItems.map((item) => (
+                      dataItems?.inventoryItems?.map((item) => (
                         <InventoryItemCard
                           key={`inventory-${item.inventory_item_id}`}
                           name={item.inventory_item_name}

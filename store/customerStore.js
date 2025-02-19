@@ -1,8 +1,10 @@
 import { create } from "zustand";
 
 const fetchTableNumber = async (token) => {
-  const cachedTableNum = sessionStorage.getItem("table_num");
-  if (cachedTableNum) return cachedTableNum;
+  if (typeof window !== "undefined") {
+    const cachedTableNum = sessionStorage.getItem("table_num");
+    if (cachedTableNum) return cachedTableNum;
+  }
 
   try {
     const response = await fetch(`/api/find-table?token=${token}`);
@@ -10,7 +12,9 @@ const fetchTableNumber = async (token) => {
 
     const data = await response.json();
     const tableNum = data[0].table_num;
-    sessionStorage.setItem("table_num", tableNum);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("table_num", tableNum);
+    }
     return tableNum;
   } catch (error) {
     console.error("Error fetching table number:", error);
@@ -18,9 +22,39 @@ const fetchTableNumber = async (token) => {
   }
 };
 
-export const useUserStore = create((set) => ({
-  userToken: null,
-  setUserToken: (token) => set({ userToken: token }),
+export const useDataStore = create((set, get) => ({
+  menuItems:
+    typeof window !== "undefined"
+      ? JSON.parse(sessionStorage.getItem("menuItems") || "[]")
+      : [],
+  setMenuItems: (menuItems) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("menuItems", JSON.stringify(menuItems));
+    }
+    set({ menuItems });
+  },
+
+  inventoryItems:
+    typeof window !== "undefined"
+      ? JSON.parse(sessionStorage.getItem("inventoryItems") || "[]")
+      : [],
+  setInventoryItems: (inventoryItems) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("inventoryItems", JSON.stringify(inventoryItems));
+    }
+    set({ inventoryItems });
+  },
+
+  categories:
+    typeof window !== "undefined"
+      ? JSON.parse(sessionStorage.getItem("categories") || "[]")
+      : [],
+  setCategoryItems: (categories) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("categories", JSON.stringify(categories));
+    }
+    set({ categories });
+  },
 }));
 
 export const useCartStore = create((set, get) => ({

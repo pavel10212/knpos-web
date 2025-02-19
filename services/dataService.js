@@ -1,11 +1,21 @@
 // Customer-facing API calls
 
-export const fetchCustomerOrders = async (table_num, token) => {
+export const fetchCustomerOrders = async (table_token) => {
   try {
-    const response = await fetch(`/api/orders/get/?table_num=${table_num}`);
+    const response = await fetch(
+      `/api/orders-for-table/get?table_token=${table_token}`,
+      {
+        headers: {
+          "table-token": table_token,
+        },
+      }
+    );
     if (!response.ok) throw new Error("Failed to fetch orders");
-    return await response.json();
+    const data = await response.json();
+    console.log(data, "data");
+    return data;
   } catch (error) {
+    console.error("Error fetching customer orders:", error);
     throw error;
   }
 };
@@ -91,34 +101,29 @@ export const deleteInventoryItem = async (itemId) => {
   }
 };
 
-export const fetchMenuData = async () => {
+export const fetchMenuData = async (token) => {
   try {
-    const cachedData = sessionStorage.getItem("menuData");
-    if (cachedData) {
-      return JSON.parse(cachedData);
+    const response = await fetch("/api/menu-items/get", {
+      headers: {
+        "table-token": token,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch menu data");
     }
 
-    const response = await fetch("/api/menu-items/get");
-    const data = await response.json();
-    sessionStorage.setItem("menuData", JSON.stringify(data));
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error fetching menu data:", error);
-    return [];
+    throw error;
   }
 };
 
 export const fetchTableData = async () => {
   try {
-    const cachedLayout = sessionStorage.getItem("tableLayout");
-    if (cachedLayout) {
-      return JSON.parse(cachedLayout);
-    }
-
     const response = await fetch("/api/tables/get");
-    const data = await response.json();
-    sessionStorage.setItem("tableLayout", JSON.stringify(data));
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error loading tables:", error);
     return [];
@@ -127,14 +132,8 @@ export const fetchTableData = async () => {
 
 export const fetchCategoryData = async () => {
   try {
-    const cachedData = sessionStorage.getItem("categoryData");
-    if (cachedData) {
-      return JSON.parse(cachedData);
-    }
     const response = await fetch("/api/categories/get");
-    const data = await response.json();
-    sessionStorage.setItem("categoryData", JSON.stringify(data));
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error fetching category data:", error);
     return [];
@@ -154,7 +153,6 @@ export const insertCategory = async (category_name) => {
       throw new Error(error.details || "Failed to insert category");
     }
 
-    sessionStorage.removeItem("categoryData");
     return await response.json();
   } catch (error) {
     console.error("Error inserting category:", error);
@@ -191,14 +189,8 @@ export const deleteCategory = async (category_id) => {
 
 export const fetchInventoryData = async () => {
   try {
-    const cachedData = sessionStorage.getItem("inventoryData");
-    if (cachedData) {
-      return JSON.parse(cachedData);
-    }
-
     const response = await fetch("/api/inventory/get");
     const data = await response.json();
-    sessionStorage.setItem("inventoryData", JSON.stringify(data));
     return data;
   } catch (error) {
     console.error("Error fetching inventory data:", error);
@@ -208,14 +200,8 @@ export const fetchInventoryData = async () => {
 
 export const fetchOrderData = async () => {
   try {
-    const cachedData = sessionStorage.getItem("orderData");
-    if (cachedData) {
-      return JSON.parse(cachedData);
-    }
-
     const response = await fetch("/api/orders/get");
     const data = await response.json();
-    sessionStorage.setItem("orderData", JSON.stringify(data));
     return data;
   } catch (error) {
     console.error("Error fetching orders data:", error);
@@ -244,7 +230,6 @@ export const saveTableLayout = async (tables) => {
       throw new Error(error.details || "Failed to save tables");
     }
 
-    sessionStorage.setItem("tableLayout", JSON.stringify(tablesToSave));
     return tablesToSave;
   } catch (error) {
     console.error("Error saving table layout:", error);
@@ -265,7 +250,6 @@ export const deleteTable = async (table_num) => {
       throw new Error(error.details || "Failed to delete table");
     }
 
-    sessionStorage.removeItem("tableLayout");
     return true;
   } catch (error) {
     console.error("Error deleting table:", error);
@@ -291,7 +275,6 @@ export const insertMenuItem = async (menuItem) => {
       throw new Error("Failed to save menu item");
     }
 
-    sessionStorage.removeItem("menuData");
     return await response.json();
   } catch (error) {
     console.error("Error inserting menu item:", error);
@@ -318,7 +301,6 @@ export const updateMenuItem = async (menuItem) => {
       throw new Error("Failed to update menu item");
     }
 
-    sessionStorage.removeItem("menuData");
     return await response.json();
   } catch (error) {
     console.error("Error updating menu item:", error);
@@ -339,7 +321,6 @@ export const deleteMenuItem = async (itemId) => {
       throw new Error(error.details || "Delete failed");
     }
 
-    sessionStorage.removeItem("menuData");
     return true;
   } catch (error) {
     console.error("Error deleting menu item:", error);
