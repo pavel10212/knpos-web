@@ -1,59 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useDataStore } from "@/store/customerStore";
 import { useRouter } from "next/navigation";
 import { fetchCustomerOrders } from "@/services/dataService";
+
+// Helper functions moved outside component
+const parseOrderDetails = (details) => {
+  if (Array.isArray(details)) return details;
+  try {
+    return typeof details === 'string' ? JSON.parse(details) : [];
+  } catch (e) {
+    console.error('Error parsing order details:', e);
+    return [];
+  }
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const menuItems = useDataStore((state) => state.menuItems);
   const inventoryItems = useDataStore((state) => state.inventoryItems);
   const router = useRouter();
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem("token");
+    }
+    return null;
+  });
 
-
-  useEffect(() => {
-    setToken(sessionStorage.getItem("token"));
-  }, []);
-
-  useEffect(() => {
-    const loadOrders = async () => {
-      if (!token) return;
-
-      try {
-        const data = await fetchCustomerOrders(token);
-        setOrders(data);
-
-        if (Array.isArray(data)) {
-        } else {
-          console.warn("Loaded data is not an array");
-        }
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      }
-    };
-
-    loadOrders();
-  }, [token]);
-
-
-  const handleSettleBill = () => {
-    alert("Waiter has been notified and will bring your bill shortly!");
-  };
-
-  const transformOrderItems = (items = []) => {
+  const transformOrderItems = useCallback((items = []) => {
     if (!Array.isArray(items)) return [];
 
     return items.map((item) => {
       const isInventoryItem = item.type === 'inventory';
-      let itemDetails;
-
-      if (isInventoryItem) {
-        itemDetails = inventoryItems.find(i => i.inventory_item_id === item.inventory_item_id);
-      } else {
-        itemDetails = menuItems.find(m => m.menu_item_id === item.menu_item_id);
-      }
+      const itemDetails = isInventoryItem
+        ? inventoryItems.find(i => i.inventory_item_id === item.inventory_item_id)
+        : menuItems.find(m => m.menu_item_id === item.menu_item_id);
 
       return {
         ...item,
@@ -65,23 +58,49 @@ export default function Orders() {
           : (itemDetails?.price || 0),
       };
     });
-  };
+  }, [inventoryItems, menuItems]);
 
-  const grandTotal = orders.reduce((sum, order) =>
-    sum + (order.isInventoryItem ? order.unit_price * (order.quantity || 1) : order.total_amount),
-    0
+  const calculateOrderTotal = useCallback((order) => {
+    const orderDetails = parseOrderDetails(order.order_details);
+    return orderDetails.reduce((total, item) => {
+      const isInventoryItem = item.type === 'inventory';
+      const itemDetails = isInventoryItem
+        ? inventoryItems.find(i => i.inventory_item_id === item.inventory_item_id)
+        : menuItems.find(m => m.menu_item_id === item.menu_item_id);
+      return total + (item.quantity * (isInventoryItem ? itemDetails?.cost_per_unit : itemDetails?.price) || 0);
+    }, 0);
+  }, [inventoryItems, menuItems]);
+
+  // Memoize grand total calculation
+  const grandTotal = useMemo(() =>
+    orders.reduce((sum, order) => sum + calculateOrderTotal(order), 0),
+    [orders, calculateOrderTotal]
   );
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  useEffect(() => {
+    const loadOrders = async () => {
+      if (!token) return;
+
+      try {
+        const data = await fetchCustomerOrders(token);
+        if (Array.isArray(data)) {
+          setOrders(data);
+        } else {
+          console.warn("Loaded data is not an array");
+          setOrders([]);
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        setOrders([]);
+      }
+    };
+
+    loadOrders();
+  }, [token]);
+
+  const handleSettleBill = useCallback(() => {
+    alert("Waiter has been notified and will bring your bill shortly!");
+  }, []);
 
   return (
     <div className="bg-gray-50 min-h-screen pb-32">
@@ -122,22 +141,27 @@ export default function Orders() {
                 </div>
 
                 <div className="space-y-2">
-                  {order.order_details?.map((item) => {
+                  {(Array.isArray(order.order_details)
+                    ? order.order_details
+                    : JSON.parse(order.order_details || '[]')
+                  ).map((item) => {
                     const transformedItem = transformOrderItems([item])[0];
                     return (
-                      <div key={`${item.type}-${item.type === 'inventory' ? item.inventory_item_id : item.menu_item_id}`}
-                        className="flex flex-col text-sm">
+                      <div
+                        key={`${item.type}-${item.type === 'inventory' ? item.inventory_item_id : item.menu_item_id}`}
+                        className="flex flex-col text-sm"
+                      >
                         <div className="flex justify-between text-gray-900">
                           <div className="flex items-center gap-2">
                             <span>{transformedItem.quantity}x {transformedItem.name}</span>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${transformedItem.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                transformedItem.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                  'bg-gray-100 text-gray-800'
+                              transformedItem.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
                               }`}>
                               {transformedItem.status}
                             </span>
                           </div>
-                          <span>{(transformedItem.price * transformedItem.quantity).toFixed(2)} THB</span>
+                          <span>{transformedItem.price} THB</span>
                         </div>
                         {transformedItem.request && (
                           <p className="text-xs text-gray-500 ml-4">Note: {transformedItem.request}</p>
@@ -150,7 +174,7 @@ export default function Orders() {
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex justify-between font-bold text-gray-900">
                     <span>Total</span>
-                    <span>{order.total_amount.toFixed(2)} THB</span>
+                    <span>{calculateOrderTotal(order).toFixed(2)} THB</span>
                   </div>
                 </div>
               </div>

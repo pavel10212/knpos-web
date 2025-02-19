@@ -16,6 +16,7 @@ export default function Cart() {
   const total = calculateTotal();
   const [token, setToken] = useState(null);
 
+
   useEffect(() => {
     const storedToken = sessionStorage.getItem('token');
     setToken(storedToken);
@@ -47,7 +48,7 @@ export default function Cart() {
                 key={item.cartItemId}
                 className="flex items-start gap-4 bg-white shadow-sm rounded-lg p-4 mb-4"
               >
-                {!item.isInventoryItem ? (
+                {item.type === "menu" ? (
                   <Image
                     width={64}
                     height={64}
@@ -63,9 +64,9 @@ export default function Cart() {
 
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-700">
-                    {item.isInventoryItem ? item.inventory_item_name : item.menu_item_name}
+                    {item.menu_item_name}
                   </h3>
-                  {!item.isInventoryItem && (
+                  {item.type === "menu" && (
                     <p className="text-sm text-gray-500 mb-2">⭐ 4.9 (120 reviews)</p>
                   )}
                   <textarea
@@ -76,7 +77,7 @@ export default function Cart() {
                     rows="2"
                   />
                   <p className="font-semibold text-yellow-500 mt-1">
-                    {item.isInventoryItem ? item.cost_per_unit : item.price} THB
+                    {item.price} THB
                   </p>
                 </div>
 

@@ -12,7 +12,6 @@ export const fetchCustomerOrders = async (table_token) => {
     );
     if (!response.ok) throw new Error("Failed to fetch orders");
     const data = await response.json();
-    console.log(data, "data");
     return data;
   } catch (error) {
     console.error("Error fetching customer orders:", error);

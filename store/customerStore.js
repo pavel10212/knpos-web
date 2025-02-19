@@ -63,12 +63,17 @@ export const useCartStore = create((set, get) => ({
 
   addToCart: (item, quantity = 1, request) =>
     set((state) => {
+      const isInventoryItem = item.menu_item_id?.toString().startsWith('inventory-');
       const newItems = Array(quantity)
         .fill(null)
         .map(() => ({
           ...item,
+          type: isInventoryItem ? "inventory" : "menu",
+          inventory_item_id: isInventoryItem ? item.menu_item_id.split('-')[1] : undefined,
+          menu_item_id: isInventoryItem ? undefined : item.menu_item_id,
           request,
           cartItemId: Math.random().toString(36).substr(2, 9),
+          isInventoryItem,
         }));
       return { cart: [...state.cart, ...newItems] };
     }),
@@ -88,7 +93,7 @@ export const useCartStore = create((set, get) => ({
   calculateTotal: () =>
     get().cart.reduce(
       (sum, item) =>
-        sum + (item.isInventoryItem ? item.cost_per_unit : item.price),
+        sum + (item.type === "inventory" ? item.price : item.price),
       0
     ),
 
@@ -102,32 +107,24 @@ export const useCartStore = create((set, get) => ({
   saveOrder: async (cart, total, token) => {
     try {
       const tableNum = await fetchTableNumber(token);
+      const calculatedTotal = get().calculateTotal(); // Ensure we have a valid total
 
       const orderDetails = {
         table_num: tableNum.toString(),
         order_status: "Pending",
-        total_amount: total,
+        total_amount: calculatedTotal, // Use calculated total
         order_date_time: new Date().toISOString(),
         completion_date_time: null,
         order_details: JSON.stringify(
           cart.map((item) => ({
-            ...(item.isInventoryItem
-              ? {
-                  inventory_item_id: item.inventory_item_id,
-                  type: "inventory",
-                  status: "pending",
-                  quantity: 1,
-                  request: item.request,
-                  unit_price: item.cost_per_unit,
-                }
-              : {
-                  menu_item_id: item.menu_item_id,
-                  type: "menu",
-                  status: "pending",
-                  quantity: 1,
-                  request: item.request,
-                  unit_price: item.price,
-                }),
+            type: item.type,
+            status: "pending",
+            quantity: 1,
+            request: item.request,
+            ...(item.type === "inventory" 
+              ? { inventory_item_id: parseInt(item.inventory_item_id) }
+              : { menu_item_id: item.menu_item_id }
+            ),
           }))
         ),
       };

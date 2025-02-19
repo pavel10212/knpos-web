@@ -172,7 +172,7 @@ export default function MenuPage() {
                     {category.category_name.toLowerCase() === 'beverages' &&
                       dataItems?.inventoryItems?.map((item) => (
                         <InventoryItemCard
-                          key={`inventory-${item.inventory_item_id}`}
+                          key={item.inventory_item_id}
                           name={item.inventory_item_name}
                           price={item.cost_per_unit}
                           onClick={() => setSelectedItem({
