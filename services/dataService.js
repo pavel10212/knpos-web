@@ -18,34 +18,6 @@ export const fetchCustomerOrders = async (table_token) => {
         throw error;
     }
 };
-
-export const createOrder = async (orderDetails, token) => {
-    try {
-        const response = await fetch("/api/orders/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(orderDetails),
-        });
-        if (!response.ok) throw new Error("Failed to create order");
-        return await response.json();
-    } catch (error) {
-        throw error;
-    }
-};
-
-// Admin-facing API calls
-export const fetchInventoryItem = async () => {
-    try {
-        const response = await fetch("/api/inventory/get");
-        if (!response.ok) throw new Error("Failed to fetch inventory");
-        return await response.json();
-    } catch (error) {
-        throw error;
-    }
-};
-
 export const createInventoryItem = async (newProduct) => {
     try {
         const response = await fetch("/api/inventory/create", {

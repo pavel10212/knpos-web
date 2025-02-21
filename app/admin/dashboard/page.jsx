@@ -1,8 +1,8 @@
 "use client";
 
-import React, {useMemo} from "react";
-import {useState, useEffect} from "react";
-import {fetchOrderData, fetchAdminMenuData} from "@/services/dataService";
+import React, { useMemo } from "react";
+import { useState, useEffect } from "react";
+import { fetchOrderData, fetchMenuData } from "@/services/dataService";
 import StatsCard from "@/components/StatsCard";
 import RecentOrders from "@/components/RecentOrders";
 import PopularItems from "@/components/PopularItems";
@@ -14,7 +14,7 @@ import PeakSalesHoursChart from "@/components/PeakSalesHoursChart";
 import CategorySalesChart from "@/components/CategorySalesChart";
 
 const Reports = () => {
-    const [data, setData] = useState({orders: [], menuItems: []});
+    const [data, setData] = useState({ orders: [], menuItems: [] });
     const [isLoading, setIsLoading] = useState(true);
     const [chartPeriod, setChartPeriod] = useState("daily");
 
@@ -23,10 +23,9 @@ const Reports = () => {
             try {
                 const [ordersData, menuData] = await Promise.all([
                     fetchOrderData(),
-                    fetchAdminMenuData(),
+                    fetchMenuData(),
                 ]);
-
-                setData({orders: ordersData, menuItems: menuData});
+                setData({ orders: ordersData, menuItems: menuData });
             } catch (error) {
                 console.error("Failed to load data:", error);
             } finally {
@@ -105,9 +104,9 @@ const Reports = () => {
         // Use for...of instead of forEach for better error handling
         for (const order of orders) {
             if (!order?.items) continue;
-
+            
             const items = Array.isArray(order.items) ? order.items : [];
-
+            
             for (const item of items) {
                 if (!item?.menu_item_id || !item?.price || !item?.quantity) {
                     continue;
@@ -129,7 +128,7 @@ const Reports = () => {
     }, [data]);
 
     if (isLoading) {
-        return <LoadingSpinner/>;
+        return <LoadingSpinner />;
     }
 
     return (
@@ -140,7 +139,7 @@ const Reports = () => {
                         Restaurant Analytics
                     </h1>
                     <p className="mt-2 text-lg text-gray-600">
-                        Monitor your restaurant&#39;s performance and make data-driven
+                        Monitor your restaurant's performance and make data-driven
                         decisions.
                     </p>
                 </div>
@@ -273,20 +272,20 @@ const Reports = () => {
                                 onChange={setChartPeriod}
                             />
                         </div>
-                        <OrdersChart orders={data.orders} period={chartPeriod}/>
+                        <OrdersChart orders={data.orders} period={chartPeriod} />
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm p-6">
                         <h2 className="text-xl font-semibold text-gray-900 mb-4">
                             Monthly Revenue
                         </h2>
-                        <MonthlyRevenueChart orders={data.orders}/>
+                        <MonthlyRevenueChart orders={data.orders} />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="bg-white rounded-2xl shadow-sm">
-                        <RecentOrders orders={Array.isArray(data.orders) ? data.orders.slice(0, 4) : []}/>
+                        <RecentOrders orders={Array.isArray(data.orders) ? data.orders.slice(0, 4) : []} />
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm">
@@ -300,11 +299,11 @@ const Reports = () => {
                         <h2 className="text-xl font-semibold text-gray-900 mb-4">
                             Peak Sales Hours
                         </h2>
-                        <PeakSalesHoursChart orders={Array.isArray(data.orders) ? data.orders : []}/>
+                        <PeakSalesHoursChart orders={Array.isArray(data.orders) ? data.orders : []} />
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm p-6">
-                        <CategorySalesChart salesData={categorySalesData}/>
+                        <CategorySalesChart salesData={categorySalesData} />
                     </div>
                 </div>
             </div>
