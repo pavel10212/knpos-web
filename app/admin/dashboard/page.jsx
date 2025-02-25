@@ -139,7 +139,7 @@ const Reports = () => {
                         Restaurant Analytics
                     </h1>
                     <p className="mt-2 text-lg text-gray-600">
-                        Monitor your restaurant's performance and make data-driven
+                        Monitor your restaurant&apos;s performance and make data-driven
                         decisions.
                     </p>
                 </div>
