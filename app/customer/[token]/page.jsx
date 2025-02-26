@@ -7,7 +7,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
-import {useSocketStore} from "@/hooks/useSocket";
 import {useCartStore, useDataStore} from "@/store/customerStore";
 import {fetchCategoryData, fetchMenuData} from "@/services/dataService";
 import InventoryItemCard from "@/components/InventoryItemCard";
@@ -16,7 +15,6 @@ export default function MenuPage() {
     const [dataItems, setDataItems] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
-    const initializeSocket = useSocketStore((state) => state.initializeSocket);
     const [error, setError] = useState(null);
     const [token, setToken] = useState(null);
     const categoryRefs = useRef({});
@@ -34,10 +32,6 @@ export default function MenuPage() {
             sessionStorage.setItem('token', cleanToken);
         }
     }, [params.token]);
-
-    useEffect(() => {
-        initializeSocket();
-    }, []);
 
 
     const fetchData = async () => {

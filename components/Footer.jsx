@@ -1,12 +1,11 @@
 "use client";
 
-import {useSocketStore} from "@/hooks/useSocket";
+import { callWaiter } from "@/services/dataService";
 
-export default function Footer({token}) {
-    const callWaiterSocket = useSocketStore((state) => state.callWaiterSocket);
+export default function Footer({ token }) {
     const handleCallWaiterHere = async () => {
         try {
-            await callWaiterSocket(token);
+            await callWaiter(token);
             alert("Waiter has been notified and will arrive at your table shortly!");
         } catch (error) {
             console.log("Error calling waiter: ", error);
