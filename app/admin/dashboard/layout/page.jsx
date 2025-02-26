@@ -10,7 +10,12 @@ import {
 } from "@/services/dataService";
 import { toast } from "sonner";
 
-const GRID_SIZE = 20;
+
+
+const GRID_SIZE = 50;
+const CONTAINER_WIDTH = 1000;
+const CONTAINER_HEIGHT = 600;
+const TABLE_SIZE = 100; // Assuming average table size of 100px
 
 const Layout = () => {
   const [tables, setTables] = useState([]);
@@ -71,6 +76,13 @@ const Layout = () => {
     return Math.round(value / GRID_SIZE) * GRID_SIZE;
   }, []);
 
+  const keepInBounds = useCallback((x, y) => {
+    return {
+      x: Math.max(0, Math.min(x, CONTAINER_WIDTH - TABLE_SIZE)),
+      y: Math.max(0, Math.min(y, CONTAINER_HEIGHT - TABLE_SIZE))
+    };
+  }, []);
+
   const handleDragStart = useCallback((e, data, isTemplate = false) => {
     e.dataTransfer.setData("type", isTemplate ? "template" : "existing");
     e.dataTransfer.setData(
@@ -84,16 +96,21 @@ const Layout = () => {
       e.preventDefault();
       const type = e.dataTransfer.getData("type");
       const dropZone = e.currentTarget.getBoundingClientRect();
-      const newX = snapToGrid(e.clientX - dropZone.left - 50);
-      const newY = snapToGrid(e.clientY - dropZone.top - 50);
+      const rawX = e.clientX - dropZone.left - 50;
+      const rawY = e.clientY - dropZone.top - 50;
+      
+      const { x: boundedX, y: boundedY } = keepInBounds(
+        snapToGrid(rawX),
+        snapToGrid(rawY)
+      );
 
       if (type === "template") {
         const tableType = e.dataTransfer.getData("tableType");
         const newTable = {
           id: tables.length + 1,
           label: `TABLE ${tables.length + 1}\n${tableType.split("-")[0]} FITS`,
-          x: newX,
-          y: newY,
+          x: boundedX,
+          y: boundedY,
           rotation: 0,
           status: "available",
           type: tableType,
@@ -104,12 +121,12 @@ const Layout = () => {
         const tableId = parseInt(e.dataTransfer.getData("tableId"));
         setTables((prev) =>
           prev.map((table) =>
-            table.id === tableId ? { ...table, x: newX, y: newY } : table
+            table.id === tableId ? { ...table, x: boundedX, y: boundedY } : table
           )
         );
       }
     },
-    [tables.length, snapToGrid]
+    [tables.length, snapToGrid, keepInBounds]
   );
 
   const handleRemoveTable = useCallback(async (tableId) => {
@@ -162,10 +179,9 @@ const Layout = () => {
               text-base font-medium rounded-full shadow-sm text-white
               transition-all duration-200 focus:outline-none focus:ring-2 
               focus:ring-offset-2 focus:ring-indigo-500
-              ${
-                isSaving
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
+              ${isSaving
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
               }
             `}
           >
@@ -214,9 +230,9 @@ const Layout = () => {
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-8">
+        <div className="bg-white rounded-2xl w-[1000px] shadow-sm overflow-hidden mb-8">
           <div
-            className="relative w-full h-[600px] bg-white border border-black"
+            className="relative w-[1000px] h-[600px] bg-white border border-black"
             onDrop={handleDrop}
             onDragOver={handleDragOver}
           >
@@ -230,12 +246,6 @@ const Layout = () => {
               />
             ))}
 
-            {/* Grid overlay */}
-            <div className="absolute inset-0 grid grid-cols-[repeat(auto-fill,minmax(20px,1fr))] grid-rows-[repeat(auto-fill,minmax(20px,1fr))] pointer-events-none">
-              {Array.from({ length: 1000 }).map((_, i) => (
-                <div key={i} className="border border-gray-100/20" />
-              ))}
-            </div>
           </div>
         </div>
 
