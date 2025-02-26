@@ -58,8 +58,8 @@ export default function Home() {
           <Image
             src="/images/logo.png"
             alt="knPOS Logo"
-            width={120}
-            height={120}
+            width={240}
+            height={240}
             className="mx-auto hover:scale-105 transition-transform duration-200"
           />
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mt-6">
@@ -67,7 +67,7 @@ export default function Home() {
           </h1>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
             knPOS is a powerful and user-friendly POS system designed for
-            restaurants and businesses. We provide seamless transaction
+            restaurants and businesses. We provide seamless analytics
             management, inventory tracking, and customer engagement tools to
             help you succeed.
           </p>

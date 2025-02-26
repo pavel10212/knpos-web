@@ -32,11 +32,16 @@ export default function MenuItemModal({ item, onClose, onAddToCart, isInventoryI
         {!isInventoryItem ? (
           // Regular menu item display
           <>
-            <Image src={item.menu_item_image || "/images/logo.png"}
-              width={400} height={300} quality={95}
-              alt={item.menu_item_name} 
-              className="w-full h-48 object-cover rounded-lg mb-4" 
-            />
+            {item.menu_item_image && (
+              <Image
+                src={item.menu_item_image}
+                width={400}
+                height={300}
+                quality={95}
+                alt={item.menu_item_name}
+                className="w-full h-48 object-cover rounded-lg mb-4"
+              />
+            )}
             <h2 className="text-2xl text-black font-bold mb-2">{item.menu_item_name}</h2>
             <p className="text-customYellow font-semibold text-lg mb-2">{item.price} THB</p>
             <p className="text-gray-600 mb-4">Ingredients: {item.description}</p>
@@ -63,14 +68,14 @@ export default function MenuItemModal({ item, onClose, onAddToCart, isInventoryI
           <div className="flex items-center gap-2">
             <button
               onClick={decreaseQuantity}
-              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-lg font-bold"
+              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-lg font-bold text-black"
             >
               -
             </button>
-            <span>{quantity}</span>
+            <span className="text-black text-lg font-bold">{quantity}</span>
             <button
               onClick={increaseQuantity}
-              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-lg font-bold"
+              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-lg font-bold text-black"
             >
               +
             </button>

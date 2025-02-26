@@ -106,7 +106,7 @@ export default function Orders() {
     <div className="bg-gray-50 min-h-screen pb-32">
       <div className="container mx-auto p-4 max-w-2xl">
         <div className="flex items-center gap-4 mb-6">
-          <button onClick={() => router.back()} className="bg-gray-100 text-gray-800 px-4 py-2 rounded-full">
+          <button onClick={() => router.back()} className="bg-gray-100 text-black px-4 py-2 rounded-full">
             ← Back
           </button>
           <h1 className="text-2xl font-bold text-gray-900">Order History</h1>
@@ -114,7 +114,7 @@ export default function Orders() {
 
         {orders.length === 0 ? (
           <div className="text-center py-8">
-            <p className="mb-4">No orders yet</p>
+            <p className="text-black mb-4">No orders yet</p>
             <button onClick={() => router.back()} className="bg-yellow-500 text-white px-6 py-2 rounded-full">
               Go to Menu
             </button>

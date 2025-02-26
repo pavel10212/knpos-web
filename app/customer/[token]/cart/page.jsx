@@ -4,6 +4,7 @@ import { useCartStore } from '@/store/customerStore'
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from 'react';
+import { FiArrowRight, FiPlus, FiShoppingCart } from 'react-icons/fi';
 
 export default function Cart() {
   const cart = useCartStore((state) => state.cart);
@@ -30,89 +31,114 @@ export default function Cart() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col justify-between">
-      <div className="container mx-auto p-4 max-w-2xl">
-        <h1 className="text-2xl text-black font-bold mb-4">Your Order</h1>
+    <div className="bg-neutral-50 min-h-screen flex flex-col">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Your Cart</h1>
+          <span className="text-gray-500 font-medium">{cart.length} items</span>
+        </div>
 
         {cart.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="mb-4 text-black">Your cart is empty</p>
-            <button onClick={() => router.back()} className="bg-yellow-500 text-white px-6 py-2 rounded-full">
-              Return to Menu
+          <div className="text-center py-12">
+            <div className="mb-6 inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full">
+              <FiShoppingCart className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-600 mb-6 text-lg">Your cart is empty</p>
+            <button
+              onClick={() => router.back()}
+              className="bg-yellow-500 hover:bg-yellow-600 transition-colors text-white px-8 py-3 rounded-lg font-medium"
+            >
+              Browse Menu
             </button>
           </div>
         ) : (
           <>
-            {cart.map((item) => (
-              <div
-                key={item.cartItemId}
-                className="flex items-start gap-4 bg-white shadow-sm rounded-lg p-4 mb-4"
-              >
-                {item.type === "menu" ? (
-                  <Image
-                    width={64}
-                    height={64}
-                    src={item.menu_item_image || "/images/logo.png"}
-                    alt={item.menu_item_name}
-                    className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center">
-                    <span className="text-2xl">🥤</span>
+            <div className="space-y-4 mb-8">
+              {cart.map((item) => (
+                <div
+                  key={item.cartItemId}
+                  className="flex items-start gap-6 bg-white border border-gray-100 rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex-shrink-0">
+                    {item.type === "menu" ? (
+                      <Image
+                        width={96}
+                        height={96}
+                        src={item.menu_item_image || "/images/logo.png"}
+                        alt={item.menu_item_name}
+                        className="w-24 h-24 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 bg-gray-50 rounded-lg flex items-center justify-center">
+                        <span className="text-3xl">🥤</span>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-700">
-                    {item.menu_item_name}
-                  </h3>
-                  {item.type === "menu" && (
-                    <p className="text-sm text-gray-500 mb-2">⭐ 4.9 (120 reviews)</p>
-                  )}
-                  <textarea
-                    value={item.request || ''}
-                    onChange={(e) => updateRequest(item.cartItemId, e.target.value)}
-                    className="text-sm text-gray-500 w-full p-1 border rounded"
-                    placeholder="Special requests..."
-                    rows="2"
-                  />
-                  <p className="font-semibold text-yellow-500 mt-1">
-                    {item.price} THB
-                  </p>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-semibold text-gray-900 text-lg">
+                        {item.menu_item_name}
+                      </h3>
+                      <p className="font-semibold text-gray-900">
+                        {item.price} THB
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Special Instructions</label>
+                      <textarea
+                        value={item.request || ''}
+                        onChange={(e) => updateRequest(item.cartItemId, e.target.value)}
+                        className="w-full p-2 text-sm text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
+                        placeholder="e.g. No onions, extra sauce..."
+                        rows="2"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => removeFromCart(item.cartItemId)}
+                      className="text-red-500 text-sm font-medium hover:text-red-600 transition-colors"
+                    >
+                      Remove item
+                    </button>
+                  </div>
                 </div>
+              ))}
+            </div>
 
-                <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => removeFromCart(item.cartItemId)}
-                    className="text-red-500 text-sm"
-                  >
-                    Remove
-                  </button>
+            <div className="border-t border-gray-200 pt-6 mb-8">
+              <div className="flex justify-between items-center mb-6">
+                <button
+                  onClick={() => router.back()}
+                  className="text-yellow-600 hover:text-yellow-700 font-medium flex items-center gap-2"
+                >
+                  <FiPlus className="w-5 h-5" />
+                  Add more items
+                </button>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500 mb-1">Total</p>
+                  <p className="text-2xl font-bold text-gray-900">{total.toFixed(2)} THB</p>
                 </div>
               </div>
-            ))}
-
-            <button
-              onClick={() => router.back()}
-              className="text-yellow-500 text-center block mt-4 mb-6 font-medium"
-            >
-              + Add more food to order
-            </button>
-
-            <div className="text-right">
-              <p className="text-lg font-bold text-gray-600">Total: {total.toFixed(2)} THB</p>
             </div>
           </>
         )}
       </div>
 
-      <div className="bg-white shadow-t-md p-4 sticky bottom-0">
-        <button
-          onClick={handleSendOrder}
-          className="bg-yellow-500 text-white w-full py-3 rounded-lg font-bold">
-          Send order →
-        </button>
-      </div>
+      {cart.length > 0 && (
+        <div className="sticky bottom-0 bg-white border-t border-gray-100 mt-auto">
+          <div className="container mx-auto max-w-4xl px-4 py-4">
+            <button
+              onClick={handleSendOrder}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 transition-colors text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2"
+            >
+              Confirm Order
+              <FiArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
