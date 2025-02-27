@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useLoading } from "@/components/common/LoadingContext";
 import InventoryTable from "@/components/inventory/InventoryTable";
 import AddProductModal from "@/components/inventory/AddProductModal";
 import EditStockModal from "@/components/inventory/EditStockModal";
@@ -10,12 +11,13 @@ import {
   createInventoryItem,
   updateInventoryItem,
   deleteInventoryItem,
-  addInventoryStock
+  addInventoryStock,
 } from "@/services/dataService";
 import { toast } from "sonner";
 
 const Inventory = () => {
   const [inventoryItems, setInventoryItems] = useState([]);
+  const { setIsLoading } = useLoading();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddStockModalOpen, setIsAddStockModalOpen] = useState(false);
@@ -35,28 +37,30 @@ const Inventory = () => {
   const [productToDelete, setProductToDelete] = useState(null);
   const [lowStockFilter, setLowStockFilter] = useState(false);
 
-
   console.log("Inventory Items:", inventoryItems);
 
   // Filter items based on low stock status
   const filteredItems = lowStockFilter
     ? inventoryItems.filter(
-      item => (item.quantity / item.max_quantity) * 100 <= 30
-    )
+        (item) => (item.quantity / item.max_quantity) * 100 <= 30
+      )
     : inventoryItems;
 
   const loadData = async () => {
+    setIsLoading(true);
     try {
       const data = await fetchInventoryData();
       setInventoryItems(data);
     } catch (error) {
       toast.error("Failed to load inventory data");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [setIsLoading]);
 
   const handleDeleteClick = (productId) => {
     setProductToDelete(productId);
@@ -68,9 +72,11 @@ const Inventory = () => {
 
     try {
       await deleteInventoryItem(productToDelete);
-      setInventoryItems(inventoryItems.filter(
-        (item) => item.inventory_item_id !== productToDelete
-      ));
+      setInventoryItems(
+        inventoryItems.filter(
+          (item) => item.inventory_item_id !== productToDelete
+        )
+      );
       toast.success("Product deleted successfully");
     } catch (error) {
       toast.error("Failed to delete product. Please try again.");
@@ -94,21 +100,25 @@ const Inventory = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
-    const editPromise = updateInventoryItem(editStock, selectedProduct.inventory_item_id)
-      .then((response) => {
-        setInventoryItems(inventoryItems.map((item) =>
+    const editPromise = updateInventoryItem(
+      editStock,
+      selectedProduct.inventory_item_id
+    ).then((response) => {
+      setInventoryItems(
+        inventoryItems.map((item) =>
           item.inventory_item_id === selectedProduct.inventory_item_id
             ? { ...item, ...editStock }
             : item
-        ));
-        setIsEditModalOpen(false);
-        return response;
-      });
+        )
+      );
+      setIsEditModalOpen(false);
+      return response;
+    });
 
     toast.promise(editPromise, {
       loading: "Updating product...",
       success: "Product updated successfully",
-      error: "Failed to update product"
+      error: "Failed to update product",
     });
   };
 
@@ -116,22 +126,28 @@ const Inventory = () => {
     if (!itemId || quantityToAdd <= 0) return;
 
     // Create a promise that will be tracked by toast
-    const addStockPromise = addInventoryStock(itemId, quantityToAdd)
-      .then((response) => {
-        setInventoryItems(inventoryItems.map((item) =>
-          item.inventory_item_id === itemId
-            ? { ...item, quantity: Number(item.quantity) + Number(quantityToAdd) }
-            : item
-        ));
+    const addStockPromise = addInventoryStock(itemId, quantityToAdd).then(
+      (response) => {
+        setInventoryItems(
+          inventoryItems.map((item) =>
+            item.inventory_item_id === itemId
+              ? {
+                  ...item,
+                  quantity: Number(item.quantity) + Number(quantityToAdd),
+                }
+              : item
+          )
+        );
         setIsAddStockModalOpen(false);
         return response;
-      });
+      }
+    );
 
     // Use toast.promise correctly - pass the promise directly without awaiting it
     toast.promise(addStockPromise, {
       loading: "Adding stock...",
       success: "Stock added successfully",
-      error: "Failed to add stock"
+      error: "Failed to add stock",
     });
 
     // Return the promise
@@ -140,13 +156,11 @@ const Inventory = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const addProductPromise = createInventoryItem(newProduct)
       .then((addedInventoryItem) => {
-        setInventoryItems([
-          ...inventoryItems,
-          ...addedInventoryItem,
-        ]);
+        setInventoryItems([...inventoryItems, ...addedInventoryItem]);
         setIsModalOpen(false);
         setNewProduct({
           inventory_item_id: "",
@@ -159,6 +173,9 @@ const Inventory = () => {
           sales_channel: "",
         });
         return addedInventoryItem;
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
 
     toast.promise(addProductPromise, {
@@ -169,7 +186,7 @@ const Inventory = () => {
   };
 
   const lowStockCount = inventoryItems.filter(
-    item => (item.quantity / item.max_quantity) * 100 <= 30
+    (item) => (item.quantity / item.max_quantity) * 100 <= 30
   ).length;
 
   return (
@@ -182,12 +199,15 @@ const Inventory = () => {
           <div className="flex gap-3">
             <button
               onClick={() => setLowStockFilter(!lowStockFilter)}
-              className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-full shadow-sm ${lowStockFilter
-                ? "bg-amber-100 text-amber-800 border-amber-300"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                }`}
+              className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-full shadow-sm ${
+                lowStockFilter
+                  ? "bg-amber-100 text-amber-800 border-amber-300"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
             >
-              {lowStockFilter ? "Show All Items" : `Low Stock (${lowStockCount})`}
+              {lowStockFilter
+                ? "Show All Items"
+                : `Low Stock (${lowStockCount})`}
               {lowStockCount > 0 && !lowStockFilter && (
                 <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-800">
                   {lowStockCount}
