@@ -132,8 +132,8 @@ export default function Orders() {
                       Order #{order.order_id} • Table {order.table_num}
                     </p>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-sm ${order.order_status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                    order.order_status === 'Completed' ? 'bg-green-100 text-green-800' :
+                  <span className={`px-2 py-1 rounded-full text-sm ${order.order_status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                    order.order_status === 'Ready' ? 'bg-green-100 text-green-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                     {order.order_status}
@@ -154,9 +154,8 @@ export default function Orders() {
                         <div className="flex justify-between text-gray-900">
                           <div className="flex items-center gap-2">
                             <span>{transformedItem.quantity}x {transformedItem.name}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${transformedItem.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              transformedItem.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800'
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${transformedItem.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                              'bg-gray-100 text-gray-800'
                               }`}>
                               {transformedItem.status}
                             </span>
