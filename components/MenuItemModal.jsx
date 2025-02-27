@@ -37,7 +37,7 @@ export default function MenuItemModal({ item, onClose, onAddToCart, isInventoryI
           // Inventory item display - no request field
           <>
             <h2 className="text-2xl text-black font-bold mb-2">{item.inventory_item_name}</h2>
-            <p className="text-customYellow font-semibold text-lg mb-4">{item.cost_per_unit} THB</p>
+            <p className="text-customYellow font-semibold text-lg mb-4">฿{item.cost_per_unit}</p>
           </>
         ) : (
           // Regular menu item display
@@ -53,14 +53,14 @@ export default function MenuItemModal({ item, onClose, onAddToCart, isInventoryI
               />
             )}
             <h2 className="text-2xl text-black font-bold mb-2">{item.menu_item_name}</h2>
-            <p className="text-customYellow font-semibold text-lg mb-2">{item.price} THB</p>
+            <p className="text-customYellow font-semibold text-lg mb-2">฿{item.price}</p>
             <p className="text-gray-600 mb-4">Ingredients: {item.description}</p>
             <textarea
               value={request}
               onChange={(e) => setRequest(e.target.value)}
               placeholder="Add a request (e.g., No onions)"
               maxLength={250}
-              className="w-full border border-gray-300 rounded-lg p-2 mb-4"
+              className="w-full border border-gray-300 rounded-lg text-gray-500 p-2 mb-4"
             />
           </>
         )}

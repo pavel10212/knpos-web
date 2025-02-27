@@ -167,8 +167,8 @@ export default function MenuPage() {
                                                 <MenuItemCard
                                                     key={item.menu_item_id}
                                                     {...item}
+                                                    item={item}
                                                     onClick={() => setSelectedItem(item)}
-                                                    onAddToCart={addToCart}
                                                 />
                                             ))}
                                         {category.category_name.toLowerCase() === 'beverages' &&
@@ -185,7 +185,6 @@ export default function MenuPage() {
                                                         inventory_item_name: item.inventory_item_name,
                                                         cost_per_unit: item.cost_per_unit
                                                     })}
-                                                    onAddToCart={addToCart}
                                                 />
                                             ))}
                                     </div>

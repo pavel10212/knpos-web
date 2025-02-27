@@ -4,7 +4,7 @@ import { useCartStore } from '@/store/customerStore'
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from 'react';
-import { FiArrowRight, FiPlus, FiShoppingCart, FiTrash2 } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiPlus, FiShoppingCart, FiTrash2 } from 'react-icons/fi';
 
 export default function Cart() {
   const cart = useCartStore((state) => state.cart);
@@ -34,7 +34,16 @@ export default function Cart() {
     <div className="bg-neutral-50 min-h-screen flex flex-col">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Your Cart</h1>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => router.back()}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Go back"
+            >
+              <FiArrowLeft className="w-5 h-5 text-gray-700" />
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Your Cart</h1>
+          </div>
           <span className="text-gray-500 font-medium">{cart.length} items</span>
         </div>
 
