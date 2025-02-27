@@ -2,14 +2,12 @@
 
 import React from "react";
 import { useState, useEffect, useMemo } from "react";
-import { fetchOrderData, fetchMenuData } from "@/services/dataService";
-import StatsCard from "@/components/StatsCard";
+import { fetchOrderData, fetchAdminMenuData } from "@/services/dataService";
 import RecentOrders from "@/components/RecentOrders";
 import PopularItems from "@/components/PopularItems";
 import OrdersChart from "@/components/OrdersChart";
 import ChartPeriodSelector from "@/components/ChartPeriodSelector";
 import MonthlyRevenueChart from "@/components/MonthlyRevenueChart";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
 import PeakSalesHoursChart from "@/components/PeakSalesHoursChart";
 import { useLoading } from "@/components/common/LoadingContext";
 
@@ -24,7 +22,7 @@ export default function Reports() {
       try {
         const [ordersData, menuData] = await Promise.all([
           fetchOrderData(),
-          fetchMenuData(),
+          fetchAdminMenuData(),
         ]);
         setData({ orders: ordersData, menuItems: menuData });
       } catch (error) {
