@@ -14,6 +14,7 @@ import { useLoading } from "@/components/common/LoadingContext";
 export default function Reports() {
   const [data, setData] = useState({ orders: [], menuItems: [] });
   const { isLoading, setIsLoading } = useLoading();
+  const [mounted, setMounted] = useState(false);
   const [chartPeriod, setChartPeriod] = useState("daily");
 
   useEffect(() => {
@@ -246,8 +247,25 @@ export default function Reports() {
     };
   }, [data]);
 
-  if (isLoading) {
-    return null; // Remove LoadingSpinner here since it's handled by layout
+  useEffect(() => {
+    setMounted(true);
+    const loadData = async () => {
+      try {
+        const [ordersData, menuData] = await Promise.all([
+          fetchOrderData(),
+          fetchMenuData(),
+        ]);
+        setData({ orders: ordersData, menuItems: menuData });
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Don't render anything until after first mount
+  if (!mounted) {
+    return null;
   }
 
   // Function to determine trend badge style
@@ -260,20 +278,20 @@ export default function Reports() {
   // Function to format large currency values
   const formatCurrency = (value) => {
     if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(2)}M`;
+      return `฿${(value / 1000000).toFixed(2)}M`;
     } else if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1)}K`;
+      return `฿${(value / 1000).toFixed(1)}K`;
     } else {
-      return `$${value.toFixed(2)}`;
+      return `฿${value.toFixed(2)}`;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen">
+      <div className="w-full mx-auto px-2 sm:px-4 lg:px-6 py-4 md:py-8">
         {/* Header with summary metrics */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Restaurant Analytics
           </h1>
           <div className="flex items-center mt-2">
@@ -293,9 +311,9 @@ export default function Reports() {
         </div>
 
         {/* Main dashboard grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Left column - Key stats */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-4 md:space-y-6">
             {/* Key Time Period Metrics */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="p-6">
@@ -488,7 +506,7 @@ export default function Reports() {
                         Avg. Order Value
                       </div>
                       <div className="text-xl font-bold text-gray-900">
-                        ${stats.averageOrder.toFixed(2)}
+                        ฿{stats.averageOrder.toFixed(2)}
                       </div>
                     </div>
                     <div className="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center">
@@ -527,7 +545,7 @@ export default function Reports() {
                         {stats.busyDay.day}
                       </div>
                       <div className="text-sm text-white/70">
-                        ${stats.busyDay.amount.toFixed(2)} avg
+                        ฿{stats.busyDay.amount.toFixed(2)} avg
                       </div>
                     </div>
                     <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -555,7 +573,7 @@ export default function Reports() {
                         {stats.slowDay.day}
                       </div>
                       <div className="text-sm text-white/70">
-                        ${stats.slowDay.amount.toFixed(2)} avg
+                        ฿{stats.slowDay.amount.toFixed(2)} avg
                       </div>
                     </div>
                     <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -577,10 +595,25 @@ export default function Reports() {
                 </div>
               </div>
             </div>
+
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <RecentOrders
+                orders={
+                  Array.isArray(data.orders) ? data.orders.slice(0, 4) : []
+                }
+              />
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <PopularItems
+                orders={Array.isArray(data.orders) ? data.orders : []}
+                menuItems={Array.isArray(data.menuItems) ? data.menuItems : []}
+              />
+            </div>
           </div>
 
           {/* Middle and right columns - Charts and data */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 md:space-y-6">
             {/* Performance metrics row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-sm overflow-hidden p-6 border border-emerald-100">
@@ -590,7 +623,7 @@ export default function Reports() {
                       Daily Avg Revenue
                     </div>
                     <div className="text-2xl font-bold text-gray-900 mt-2">
-                      ${stats.averagePerDay.toFixed(2)}
+                      ฿{stats.averagePerDay.toFixed(2)}
                     </div>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -646,7 +679,7 @@ export default function Reports() {
                       Today&apos;s Sales
                     </div>
                     <div className="text-2xl font-bold text-gray-900 mt-2">
-                      ${stats.dailySales.toFixed(2)}
+                      ฿{stats.dailySales.toFixed(2)}
                     </div>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -670,9 +703,9 @@ export default function Reports() {
 
             {/* Charts section */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
+              <div className="p-4 sm:p-6">
+                <div className="flex flex-wrap items-center justify-between mb-4">
+                  <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-0">
                     Orders Trend
                   </h2>
                   <ChartPeriodSelector
@@ -680,49 +713,37 @@ export default function Reports() {
                     onChange={setChartPeriod}
                   />
                 </div>
-                <OrdersChart orders={data.orders} period={chartPeriod} />
+                <div className="mt-1">
+                  <OrdersChart orders={data.orders} period={chartPeriod} />
+                </div>
               </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="p-4 sm:p-6">
+                <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">
                   Monthly Revenue
                 </h2>
-                <MonthlyRevenueChart orders={data.orders} />
+                <div className="mt-1">
+                  <MonthlyRevenueChart orders={data.orders} />
+                </div>
               </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="p-4 sm:p-6">
+                <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">
                   Peak Sales Hours
                 </h2>
-                <PeakSalesHoursChart
-                  orders={Array.isArray(data.orders) ? data.orders : []}
-                />
+                <div className="mt-1">
+                  <PeakSalesHoursChart
+                    orders={Array.isArray(data.orders) ? data.orders : []}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Recent orders and popular items row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <RecentOrders
-                  orders={
-                    Array.isArray(data.orders) ? data.orders.slice(0, 4) : []
-                  }
-                />
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <PopularItems
-                  orders={Array.isArray(data.orders) ? data.orders : []}
-                  menuItems={
-                    Array.isArray(data.menuItems) ? data.menuItems : []
-                  }
-                />
-              </div>
-            </div>
+            {/* Remove the Recent orders and popular items grid since it's moved to left column */}
           </div>
         </div>
       </div>

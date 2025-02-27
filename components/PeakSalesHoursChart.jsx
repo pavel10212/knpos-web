@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -7,8 +7,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
-} from 'recharts';
+  ResponsiveContainer,
+} from "recharts";
 
 const PeakSalesHoursChart = ({ orders }) => {
   const hourlyData = useMemo(() => {
@@ -18,17 +18,26 @@ const PeakSalesHoursChart = ({ orders }) => {
     }
 
     // Initialize hours data structure (0-23 hours)
-    const hourlyStats = Array(24).fill().map((_, i) => ({
-      hour: i,
-      revenue: 0,
-      orderCount: 0,
-      displayHour: i === 0 ? '12 AM' : i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`
-    }));
+    const hourlyStats = Array(24)
+      .fill()
+      .map((_, i) => ({
+        hour: i,
+        revenue: 0,
+        orderCount: 0,
+        displayHour:
+          i === 0
+            ? "12 AM"
+            : i < 12
+            ? `${i} AM`
+            : i === 12
+            ? "12 PM"
+            : `${i - 12} PM`,
+      }));
 
     // Track table sessions similar to how average table time is calculated
     const tableVisits = {};
 
-    orders.forEach(order => {
+    orders.forEach((order) => {
       if (!order.order_date_time) return;
 
       const orderTime = new Date(order.order_date_time);
@@ -38,7 +47,7 @@ const PeakSalesHoursChart = ({ orders }) => {
       hourlyStats[hour].orderCount += 1;
 
       // Add to hourly revenue
-      hourlyStats[hour].revenue += (order.total_amount || 0);
+      hourlyStats[hour].revenue += order.total_amount || 0;
 
       // Track table sessions if table_token exists
       if (order.table_token) {
@@ -46,7 +55,7 @@ const PeakSalesHoursChart = ({ orders }) => {
           tableVisits[order.table_token] = {
             firstOrderTime: orderTime,
             lastActivityTime: orderTime,
-            hours: new Set([hour]) // Keep track of hours this table was active
+            hours: new Set([hour]), // Keep track of hours this table was active
           };
         } else {
           // Update first order time if this is earlier
@@ -55,9 +64,9 @@ const PeakSalesHoursChart = ({ orders }) => {
           }
 
           // Use completion time if available, otherwise use order time
-          const activityTime = order.completion_date_time ?
-            new Date(order.completion_date_time) :
-            orderTime;
+          const activityTime = order.completion_date_time
+            ? new Date(order.completion_date_time)
+            : orderTime;
 
           // Update last activity time if this is later
           if (activityTime > tableVisits[order.table_token].lastActivityTime) {
@@ -71,7 +80,7 @@ const PeakSalesHoursChart = ({ orders }) => {
     });
 
     // Add "table presence" data to our hourly stats
-    Object.values(tableVisits).forEach(visit => {
+    Object.values(tableVisits).forEach((visit) => {
       // For each table session, distribute its presence across the hours it was active
       const startHour = visit.firstOrderTime.getHours();
       const endHour = visit.lastActivityTime.getHours();
@@ -87,7 +96,7 @@ const PeakSalesHoursChart = ({ orders }) => {
       }
 
       // Increment table presence count for each hour
-      visit.hours.forEach(hour => {
+      visit.hours.forEach((hour) => {
         if (!hourlyStats[hour].tablePresence) {
           hourlyStats[hour].tablePresence = 0;
         }
@@ -98,8 +107,28 @@ const PeakSalesHoursChart = ({ orders }) => {
     return hourlyStats;
   }, [orders]);
 
+  // Custom tooltip to format currency values
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 shadow-lg rounded border border-gray-200 text-sm">
+          <p className="font-semibold mb-1 text-black">{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color }}>
+              {entry.name}:{" "}
+              {entry.name === "Revenue"
+                ? `฿${entry.value.toFixed(2)}`
+                : entry.value}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="h-80">
+    <div className="w-full h-[300px] md:h-[350px] lg:h-[400px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={hourlyData}
@@ -110,27 +139,66 @@ const PeakSalesHoursChart = ({ orders }) => {
             bottom: 30,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey="displayHour"
-            tick={{ fontSize: 12 }}
-            interval={1}
+            tick={{ fontSize: 10 }}
+            interval="preserveStartEnd"
+            tickMargin={5}
             angle={-45}
             textAnchor="end"
+            height={60}
+            scale="band"
+            padding={{ left: 10, right: 10 }}
           />
-          <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-          <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-          <Tooltip
-            formatter={(value, name) => {
-              if (name === 'Revenue') return [`$${value.toFixed(2)}`, name];
-              return [value, name];
-            }}
+          <YAxis
+            yAxisId="left"
+            orientation="left"
+            stroke="#8884d8"
+            tickFormatter={(value) => `฿${value}`}
+            width={45}
+            tick={{ fontSize: 10 }}
+            tickMargin={5}
           />
-          <Legend />
-          <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#8884d8" />
-          <Bar yAxisId="right" dataKey="orderCount" name="Order Count" fill="#82ca9d" />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            stroke="#82ca9d"
+            width={30}
+            tick={{ fontSize: 10 }}
+            tickMargin={5}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend
+            wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
+            iconSize={10}
+            iconType="circle"
+          />
+          <Bar
+            yAxisId="left"
+            dataKey="revenue"
+            name="Revenue"
+            fill="#8884d8"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={25}
+          />
+          <Bar
+            yAxisId="right"
+            dataKey="orderCount"
+            name="Order Count"
+            fill="#82ca9d"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={25}
+          />
           {hourlyData[0]?.tablePresence !== undefined && (
-            <Bar yAxisId="right" dataKey="tablePresence" name="Table Occupancy" fill="#ffc658" />
+            <Bar
+              yAxisId="right"
+              dataKey="tablePresence"
+              name="Table Occupancy"
+              fill="#ffc658"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={25}
+            />
           )}
         </BarChart>
       </ResponsiveContainer>

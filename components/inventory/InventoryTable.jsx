@@ -5,27 +5,27 @@ const InventoryTable = ({ data, onEdit, onDelete, onAddStock }) => {
   // Function to determine stock status and styling
   const getStockStatus = (item) => {
     const stockPercentage = (item.quantity / item.max_quantity) * 100;
-    
+
     if (stockPercentage <= 15) {
       return {
         status: "Critical",
         className: "bg-red-50 text-red-700",
         textClass: "text-red-700 font-semibold",
-        badge: "bg-red-100 text-red-800 border-red-200"
+        badge: "bg-red-100 text-red-800 border-red-200",
       };
     } else if (stockPercentage <= 30) {
       return {
         status: "Low",
         className: "bg-yellow-50 text-yellow-700",
         textClass: "text-yellow-700 font-semibold",
-        badge: "bg-yellow-100 text-yellow-800 border-yellow-200"
+        badge: "bg-yellow-100 text-yellow-800 border-yellow-200",
       };
     }
     return {
       status: "Good",
       className: "",
       textClass: "text-green-700",
-      badge: "bg-green-100 text-green-800 border-green-200"
+      badge: "bg-green-100 text-green-800 border-green-200",
     };
   };
 
@@ -47,13 +47,24 @@ const InventoryTable = ({ data, onEdit, onDelete, onAddStock }) => {
         <tbody>
           {data.map((item) => {
             const stockStatus = getStockStatus(item);
-            const stockPercentage = Math.round((item.quantity / item.max_quantity) * 100);
-            
+            const stockPercentage = Math.round(
+              (item.quantity / item.max_quantity) * 100
+            );
+
             return (
-              <tr key={item.inventory_item_id} className={stockStatus.className}>
-                <td className="px-6 py-4 text-black">{item.inventory_item_id}</td>
-                <td className="px-6 py-4 text-black">{item.inventory_item_name}</td>
-                <td className="px-6 py-4 text-black">${parseFloat(item.cost_per_unit).toFixed(2)}</td>
+              <tr
+                key={item.inventory_item_id}
+                className={stockStatus.className}
+              >
+                <td className="px-6 py-4 text-black">
+                  {item.inventory_item_id}
+                </td>
+                <td className="px-6 py-4 text-black">
+                  {item.inventory_item_name}
+                </td>
+                <td className="px-6 py-4 text-black">
+                  ฿{parseFloat(item.cost_per_unit).toFixed(2)}
+                </td>
                 <td className="px-6 py-4 text-black">{item.category}</td>
                 <td className="px-6 py-4 text-black">{item.sales_channel}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -77,19 +88,33 @@ const InventoryTable = ({ data, onEdit, onDelete, onAddStock }) => {
                         ></div>
                       </div>
                     </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${stockStatus.badge}`}>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${stockStatus.badge}`}
+                    >
                       {stockStatus.status}
                     </span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-black">{item.max_quantity} {item.unit}s</td>
+                <td className="px-6 py-4 text-black">
+                  {item.max_quantity} {item.unit}s
+                </td>
                 <td className="px-6 py-4 flex space-x-3">
                   <button
                     onClick={() => onAddStock(item)}
                     className="inline-flex items-center px-3 py-1.5 border border-green-600 text-xs font-medium rounded-md text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                   >
-                    <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    <svg
+                      className="w-3.5 h-3.5 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
                     </svg>
                     Stock
                   </button>

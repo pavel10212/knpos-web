@@ -127,15 +127,33 @@ const OrdersChart = ({ orders, period = "weekly" }) => {
         borderColor: "rgb(59, 130, 246)",
         backgroundColor: "rgba(59, 130, 246, 0.5)",
         tension: 0.3,
+        pointRadius: 3,
+        pointHoverRadius: 5,
       },
     ],
   };
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
+        labels: {
+          boxWidth: 10,
+          font: {
+            size: 12,
+          },
+        },
+      },
+      tooltip: {
+        bodyFont: {
+          size: 14,
+        },
+        titleFont: {
+          size: 16,
+        },
+        padding: 10,
       },
     },
     scales: {
@@ -143,13 +161,35 @@ const OrdersChart = ({ orders, period = "weekly" }) => {
         beginAtZero: true,
         ticks: {
           stepSize: 1,
+          font: {
+            size: 11,
+          },
+          maxTicksLimit: 8,
+        },
+        grid: {
+          display: true,
+          drawBorder: true,
+        },
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 10,
+          },
+          maxRotation: 45,
+          minRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: period === "daily" ? 7 : undefined,
+        },
+        grid: {
+          display: false,
         },
       },
     },
   };
 
   return (
-    <div className="bg-blue-50 p-2 rounded-lg shadow-lg">
+    <div className="w-full h-[300px] md:h-[350px] lg:h-[400px]">
       <Line options={options} data={data} />
     </div>
   );

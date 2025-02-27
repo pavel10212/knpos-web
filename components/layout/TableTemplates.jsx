@@ -1,6 +1,6 @@
 const TableTemplates = ({ predefinedTables, onDragStart }) => {
   return (
-    <div className="p-4 border-gray-300 bg-white rounded-2xl">
+    <div className="p-4 border-gray-300 bg-white rounded-2xl w-[500px] shadow-md">
       <h2 className="text-black text-lg font-bold mb-4">Table Templates</h2>
       <div className="flex space-x-4">
         {predefinedTables.map((table, index) => (

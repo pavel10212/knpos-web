@@ -137,7 +137,7 @@ const AddItemModal = ({
                     onChange={(e) =>
                       setNewItem({ ...newItem, title: e.target.value })
                     }
-                    className="w-full px-4 text-black py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full px-4 text-black py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     required
                   />
                 </div>
@@ -158,7 +158,7 @@ const AddItemModal = ({
                           price: e.target.value.replace(/[^0-9.]/g, ""),
                         })
                       }
-                      className="w-full pl-7 text-black pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      className="w-full pl-7 text-black pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                       placeholder="0.00"
                       required
                     />
@@ -175,7 +175,7 @@ const AddItemModal = ({
                   onChange={(e) =>
                     setNewItem({ ...newItem, category: e.target.value })
                   }
-                  className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   required
                 >
                   <option value="">Select a category</option>
@@ -197,7 +197,7 @@ const AddItemModal = ({
                     setNewItem({ ...newItem, description: e.target.value })
                   }
                   rows="3"
-                  className="w-full text-black px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full text-black px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   required
                 />
               </div>

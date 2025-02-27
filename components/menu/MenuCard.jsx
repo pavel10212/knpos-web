@@ -26,7 +26,7 @@ const MenuCard = ({ item, onDelete, onEdit }) => {
         </h2>
         <p className="text-gray-600 text-sm mt-1 mb-2">{item.description}</p>
         <div className="flex items-center justify-between">
-          <span className="text-green-600 font-bold">${item.price}</span>
+          <span className="text-green-600 font-bold">฿{item.price}</span>
           <div className="flex gap-2">
             <button
               onClick={(e) => {
