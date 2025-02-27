@@ -119,6 +119,7 @@ export const useCartStore = create((set, get) => ({
                     cart.map((item) => ({
                         type: item.type,
                         status: "pending",
+                        cartItemId: item.cartItemId,
                         quantity: 1,
                         request: item.request,
                         ...(item.type === "inventory"
