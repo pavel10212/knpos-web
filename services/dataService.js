@@ -91,6 +91,27 @@ export const deleteInventoryItem = async (itemId) => {
   }
 };
 
+export const addInventoryStock = async (itemId, quantityToAdd) => {
+  try {
+    const response = await fetch("/api/inventory/add-stock", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        inventory_item_id: itemId,
+        quantity_to_add: quantityToAdd
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || "Failed to add stock");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error adding inventory stock:", error);
+    throw error;
+  }
+};
+
 export const fetchAdminMenuData = async () => {
   try {
     const response = await fetch("/api/admin-menu/get");

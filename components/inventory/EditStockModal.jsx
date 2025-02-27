@@ -62,7 +62,86 @@ const EditStockModal = ({
                   required
                 />
               </div>
-              {/* Add similar styled inputs for other fields */}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Quantity
+                </label>
+                <input
+                  type="number"
+                  value={editStock.quantity}
+                  onChange={(e) =>
+                    setEditStock({ ...editStock, quantity: Number(e.target.value) })
+                  }
+                  className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Unit
+                </label>
+                <input
+                  type="text"
+                  value={editStock.unit}
+                  onChange={(e) =>
+                    setEditStock({ ...editStock, unit: e.target.value })
+                  }
+                  className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Maximum Quantity
+                </label>
+                <input
+                  type="number"
+                  value={editStock.max_quantity}
+                  onChange={(e) =>
+                    setEditStock({ ...editStock, max_quantity: Number(e.target.value) })
+                  }
+                  className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cost per Unit
+                </label>
+                <div className="relative rounded-lg">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">$</span>
+                  </div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editStock.cost_per_unit}
+                    onChange={(e) =>
+                      setEditStock({ ...editStock, cost_per_unit: Number(e.target.value) })
+                    }
+                    className="w-full pl-7 pr-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sales Channel
+                </label>
+                <input
+                  type="text"
+                  value={editStock.sales_channel || ''}
+                  onChange={(e) =>
+                    setEditStock({ ...editStock, sales_channel: e.target.value })
+                  }
+                  className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-4 pt-4 border-t">

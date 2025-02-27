@@ -5,7 +5,7 @@ export async function GET(req) {
 
     try {
         const response = await fetch(
-            `http://${process.env.NEXT_PUBLIC_IP}:3000/menu-get`,
+            `http://${process.env.NEXT_PUBLIC_IP}:3000/admin-menu-get`,
             {
                 headers: {
                     Authorization: `Bearer ${process.env.ADMIN_API_KEY}`,
