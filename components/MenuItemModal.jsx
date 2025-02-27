@@ -11,7 +11,11 @@ export default function MenuItemModal({ item, onClose, onAddToCart, isInventoryI
   const decreaseQuantity = () => setQuantity(quantity > 1 ? quantity - 1 : 1);
 
   const handleAddToCart = () => {
-    onAddToCart(item, quantity, request);
+    if (isInventoryItem) {
+      onAddToCart(item, quantity);
+    } else {
+      onAddToCart(item, quantity, request);
+    }
     onClose();
   };
 
@@ -29,7 +33,13 @@ export default function MenuItemModal({ item, onClose, onAddToCart, isInventoryI
           ✕
         </button>
 
-        {!isInventoryItem ? (
+        {isInventoryItem ? (
+          // Inventory item display - no request field
+          <>
+            <h2 className="text-2xl text-black font-bold mb-2">{item.inventory_item_name}</h2>
+            <p className="text-customYellow font-semibold text-lg mb-4">{item.cost_per_unit} THB</p>
+          </>
+        ) : (
           // Regular menu item display
           <>
             {item.menu_item_image && (
@@ -52,15 +62,6 @@ export default function MenuItemModal({ item, onClose, onAddToCart, isInventoryI
               maxLength={250}
               className="w-full border border-gray-300 rounded-lg p-2 mb-4"
             />
-          </>
-        ) : (
-          // Inventory item display
-          <>
-            <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-              <span className="text-6xl">🥤</span>
-            </div>
-            <h2 className="text-2xl text-black font-bold mb-2">{item.inventory_item_name}</h2>
-            <p className="text-customYellow font-semibold text-lg mb-4">{item.cost_per_unit} THB</p>
           </>
         )}
 

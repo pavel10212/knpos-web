@@ -4,7 +4,7 @@ import { useCartStore } from '@/store/customerStore'
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from 'react';
-import { FiArrowRight, FiPlus, FiShoppingCart } from 'react-icons/fi';
+import { FiArrowRight, FiPlus, FiShoppingCart, FiTrash2 } from 'react-icons/fi';
 
 export default function Cart() {
   const cart = useCartStore((state) => state.cart);
@@ -60,7 +60,7 @@ export default function Cart() {
                   className="flex items-start gap-6 bg-white border border-gray-100 rounded-xl p-4 shadow-sm"
                 >
                   <div className="flex-shrink-0">
-                    {item.type === "menu" ? (
+                    {!item.isInventoryItem ? (
                       <Image
                         width={96}
                         height={96}
@@ -69,8 +69,7 @@ export default function Cart() {
                         className="w-24 h-24 object-cover rounded-lg"
                       />
                     ) : (
-                      <div className="w-24 h-24 bg-gray-50 rounded-lg flex items-center justify-center">
-                        <span className="text-3xl">🥤</span>
+                      <div>
                       </div>
                     )}
                   </div>
@@ -78,28 +77,31 @@ export default function Cart() {
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-start justify-between">
                       <h3 className="font-semibold text-gray-900 text-lg">
-                        {item.menu_item_name}
+                        {item.isInventoryItem ? item.inventory_item_name : item.menu_item_name}
                       </h3>
                       <p className="font-semibold text-gray-900">
-                        {item.price} THB
+                        {item.isInventoryItem ? item.cost_per_unit : item.price} THB
                       </p>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Special Instructions</label>
-                      <textarea
-                        value={item.request || ''}
-                        onChange={(e) => updateRequest(item.cartItemId, e.target.value)}
-                        className="w-full p-2 text-sm text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
-                        placeholder="e.g. No onions, extra sauce..."
-                        rows="2"
-                      />
-                    </div>
+                    {!item.isInventoryItem && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Special Instructions</label>
+                        <textarea
+                          value={item.request || ''}
+                          onChange={(e) => updateRequest(item.cartItemId, e.target.value)}
+                          className="w-full p-2 text-sm text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
+                          placeholder="e.g. No onions, extra sauce..."
+                          rows="2"
+                        />
+                      </div>
+                    )}
 
                     <button
                       onClick={() => removeFromCart(item.cartItemId)}
-                      className="text-red-500 text-sm font-medium hover:text-red-600 transition-colors"
+                      className="flex items-center gap-1 text-red-500 text-sm font-medium hover:text-red-600 transition-colors bg-red-50 px-3 py-1.5 rounded-lg"
                     >
+                      <FiTrash2 className="w-4 h-4" />
                       Remove item
                     </button>
                   </div>
@@ -111,7 +113,7 @@ export default function Cart() {
               <div className="flex justify-between items-center mb-6">
                 <button
                   onClick={() => router.back()}
-                  className="text-yellow-600 hover:text-yellow-700 font-medium flex items-center gap-2"
+                  className="bg-white border-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
                 >
                   <FiPlus className="w-5 h-5" />
                   Add more items

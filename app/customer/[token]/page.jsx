@@ -168,6 +168,7 @@ export default function MenuPage() {
                                                     key={item.menu_item_id}
                                                     {...item}
                                                     onClick={() => setSelectedItem(item)}
+                                                    onAddToCart={addToCart}
                                                 />
                                             ))}
                                         {category.category_name.toLowerCase() === 'beverages' &&
@@ -180,9 +181,11 @@ export default function MenuPage() {
                                                         menu_item_id: `inventory-${item.inventory_item_id}`,
                                                         menu_item_name: item.inventory_item_name,
                                                         price: item.cost_per_unit,
-                                                        description: "",
-                                                        menu_item_image: ""
+                                                        isInventoryItem: true,
+                                                        inventory_item_name: item.inventory_item_name,
+                                                        cost_per_unit: item.cost_per_unit
                                                     })}
+                                                    onAddToCart={addToCart}
                                                 />
                                             ))}
                                     </div>
@@ -198,6 +201,7 @@ export default function MenuPage() {
                             item={selectedItem}
                             onClose={() => setSelectedItem(null)}
                             onAddToCart={addToCart}
+                            isInventoryItem={selectedItem.menu_item_id?.toString().startsWith('inventory-')}
                         />
                     )}
                 </div>
