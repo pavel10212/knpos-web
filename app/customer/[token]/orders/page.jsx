@@ -180,23 +180,6 @@ export default function Orders() {
             ))}
           </div>
         )}
-
-        {orders.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white shadow-t-md">
-            <div className="container mx-auto p-4 max-w-2xl">
-              <div className="flex justify-between items-center mb-4 text-xl font-bold text-gray-900">
-                <span>Grand Total</span>
-                <span>{grandTotal.toFixed(2)} THB</span>
-              </div>
-              <button
-                onClick={handleSettleBill}
-                className="w-full bg-yellow-500 text-white py-3 rounded-lg font-bold"
-              >
-                Settle Bill
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
