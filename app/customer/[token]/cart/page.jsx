@@ -35,7 +35,7 @@ export default function Cart() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => router.back()}
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
               aria-label="Go back"
