@@ -249,18 +249,6 @@ export default function Reports() {
 
   useEffect(() => {
     setMounted(true);
-    const loadData = async () => {
-      try {
-        const [ordersData, menuData] = await Promise.all([
-          fetchOrderData(),
-          fetchMenuData(),
-        ]);
-        setData({ orders: ordersData, menuItems: menuData });
-      } catch (error) {
-        console.error("Failed to load data:", error);
-      }
-    };
-    loadData();
   }, []);
 
   // Don't render anything until after first mount
