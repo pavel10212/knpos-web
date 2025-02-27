@@ -287,11 +287,11 @@ export default function Reports() {
   };
 
   return (
-    <div className="min-h-screen ">
-      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen">
+      <div className="w-full mx-auto px-2 sm:px-4 lg:px-6 py-4 md:py-8">
         {/* Header with summary metrics */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Restaurant Analytics
           </h1>
           <div className="flex items-center mt-2">
@@ -311,9 +311,9 @@ export default function Reports() {
         </div>
 
         {/* Main dashboard grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Left column - Key stats */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-4 md:space-y-6">
             {/* Key Time Period Metrics */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="p-6">
@@ -613,7 +613,7 @@ export default function Reports() {
           </div>
 
           {/* Middle and right columns - Charts and data */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 md:space-y-6">
             {/* Performance metrics row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-sm overflow-hidden p-6 border border-emerald-100">
@@ -703,9 +703,9 @@ export default function Reports() {
 
             {/* Charts section */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
+              <div className="p-4 sm:p-6">
+                <div className="flex flex-wrap items-center justify-between mb-4">
+                  <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-0">
                     Orders Trend
                   </h2>
                   <ChartPeriodSelector
@@ -713,27 +713,33 @@ export default function Reports() {
                     onChange={setChartPeriod}
                   />
                 </div>
-                <OrdersChart orders={data.orders} period={chartPeriod} />
+                <div className="mt-1">
+                  <OrdersChart orders={data.orders} period={chartPeriod} />
+                </div>
               </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="p-4 sm:p-6">
+                <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">
                   Monthly Revenue
                 </h2>
-                <MonthlyRevenueChart orders={data.orders} />
+                <div className="mt-1">
+                  <MonthlyRevenueChart orders={data.orders} />
+                </div>
               </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="p-4 sm:p-6">
+                <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">
                   Peak Sales Hours
                 </h2>
-                <PeakSalesHoursChart
-                  orders={Array.isArray(data.orders) ? data.orders : []}
-                />
+                <div className="mt-1">
+                  <PeakSalesHoursChart
+                    orders={Array.isArray(data.orders) ? data.orders : []}
+                  />
+                </div>
               </div>
             </div>
 

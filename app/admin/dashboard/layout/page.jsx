@@ -20,6 +20,23 @@ const Layout = () => {
   const [tables, setTables] = useState([]);
   const { setIsLoading } = useLoading();
   const [isSaving, setIsSaving] = useState(false);
+  const [isScreenTooSmall, setIsScreenTooSmall] = useState(true);
+
+  // Check screen size
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsScreenTooSmall(window.innerWidth < 1100);
+    };
+
+    // Initial check
+    checkScreenSize();
+
+    // Listen for resize events
+    window.addEventListener("resize", checkScreenSize);
+
+    // Clean up
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
 
   // Memoize formatTables function
   const formatTables = useCallback((tables) => {
@@ -47,9 +64,12 @@ const Layout = () => {
     }
   }, [formatTables, setIsLoading]);
 
+  // Only load tables if screen is large enough
   useEffect(() => {
-    loadTables();
-  }, [loadTables]);
+    if (!isScreenTooSmall) {
+      loadTables();
+    }
+  }, [loadTables, isScreenTooSmall]);
 
   const saveToEC2 = useCallback(async () => {
     if (isSaving) return;
@@ -176,6 +196,36 @@ const Layout = () => {
   const handleDragOver = (e) => {
     e.preventDefault();
   };
+
+  // If screen is too small, show message instead of layout editor
+  if (isScreenTooSmall) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 text-center max-w-md">
+          <svg
+            className="w-20 h-20 mx-auto text-blue-500 mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Screen Size Too Small
+          </h2>
+          <p className="text-gray-600 mb-6">
+            The table layout manager requires a larger screen to work properly.
+            Please use a desktop to access this feature.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

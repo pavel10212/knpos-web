@@ -68,31 +68,78 @@ const MonthlyRevenueChart = ({ orders }) => {
         label: "Monthly Revenue",
         data: values,
         borderColor: "rgb(75, 192, 192)",
+        backgroundColor: "rgba(75, 192, 192, 0.5)",
         tension: 0.1,
-        fill: false,
+        fill: true,
+        pointRadius: 3,
+        pointHoverRadius: 5,
       },
     ],
   };
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
     plugins: {
       legend: {
         position: "top",
+        labels: {
+          boxWidth: 10,
+          font: {
+            size: 12,
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            let label = context.dataset.label || "";
+            if (label) {
+              label += ": ";
+            }
+            if (context.parsed.y !== null) {
+              label += `฿${context.parsed.y.toFixed(2)}`;
+            }
+            return label;
+          },
+        },
+        bodyFont: {
+          size: 14,
+        },
+        titleFont: {
+          size: 16,
+        },
       },
     },
     scales: {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: (value) => `$${value}`,
+          callback: (value) => `฿${value}`,
+          font: {
+            size: 11,
+          },
+          maxTicksLimit: 6,
+        },
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 10,
+          },
+          maxRotation: 45,
+          minRotation: 0,
         },
       },
     },
   };
 
   return (
-    <div className="bg-blue-50 p-2 rounded-lg shadow-lg ">
+    <div className="w-full h-[300px] md:h-[350px] lg:h-[400px]">
       <Line data={chartData} options={options} />
     </div>
   );
