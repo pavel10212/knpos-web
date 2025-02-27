@@ -132,8 +132,8 @@ export default function Orders() {
                       Order #{order.order_id} • Table {order.table_num}
                     </p>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-sm ${order.order_status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                    order.order_status === 'Completed' ? 'bg-green-100 text-green-800' :
+                  <span className={`px-2 py-1 rounded-full text-sm ${order.order_status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                    order.order_status === 'Ready' ? 'bg-green-100 text-green-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                     {order.order_status}
@@ -154,9 +154,8 @@ export default function Orders() {
                         <div className="flex justify-between text-gray-900">
                           <div className="flex items-center gap-2">
                             <span>{transformedItem.quantity}x {transformedItem.name}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${transformedItem.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              transformedItem.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800'
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${transformedItem.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                              'bg-gray-100 text-gray-800'
                               }`}>
                               {transformedItem.status}
                             </span>
@@ -179,23 +178,6 @@ export default function Orders() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {orders.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white shadow-t-md">
-            <div className="container mx-auto p-4 max-w-2xl">
-              <div className="flex justify-between items-center mb-4 text-xl font-bold text-gray-900">
-                <span>Grand Total</span>
-                <span>{grandTotal.toFixed(2)} THB</span>
-              </div>
-              <button
-                onClick={handleSettleBill}
-                className="w-full bg-yellow-500 text-white py-3 rounded-lg font-bold"
-              >
-                Settle Bill
-              </button>
-            </div>
           </div>
         )}
       </div>

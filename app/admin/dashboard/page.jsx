@@ -2,14 +2,12 @@
 
 import React from "react";
 import { useState, useEffect, useMemo } from "react";
-import { fetchOrderData, fetchMenuData } from "@/services/dataService";
-import StatsCard from "@/components/StatsCard";
+import { fetchOrderData, fetchAdminMenuData } from "@/services/dataService";
 import RecentOrders from "@/components/RecentOrders";
 import PopularItems from "@/components/PopularItems";
 import OrdersChart from "@/components/OrdersChart";
 import ChartPeriodSelector from "@/components/ChartPeriodSelector";
 import MonthlyRevenueChart from "@/components/MonthlyRevenueChart";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
 import PeakSalesHoursChart from "@/components/PeakSalesHoursChart";
 import { useLoading } from "@/components/common/LoadingContext";
 
@@ -18,6 +16,24 @@ export default function Reports() {
   const { isLoading, setIsLoading } = useLoading();
   const [mounted, setMounted] = useState(false);
   const [chartPeriod, setChartPeriod] = useState("daily");
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const [ordersData, menuData] = await Promise.all([
+          fetchOrderData(),
+          fetchAdminMenuData(),
+        ]);
+        setData({ orders: ordersData, menuItems: menuData });
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, [setIsLoading]);
 
   const stats = useMemo(() => {
     const orders = Array.isArray(data.orders) ? data.orders : [];
