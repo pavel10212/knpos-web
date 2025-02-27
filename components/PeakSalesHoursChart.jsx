@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -7,8 +7,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
-} from 'recharts';
+  ResponsiveContainer,
+} from "recharts";
 
 const PeakSalesHoursChart = ({ orders }) => {
   const hourlyData = useMemo(() => {
@@ -18,17 +18,26 @@ const PeakSalesHoursChart = ({ orders }) => {
     }
 
     // Initialize hours data structure (0-23 hours)
-    const hourlyStats = Array(24).fill().map((_, i) => ({
-      hour: i,
-      revenue: 0,
-      orderCount: 0,
-      displayHour: i === 0 ? '12 AM' : i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`
-    }));
+    const hourlyStats = Array(24)
+      .fill()
+      .map((_, i) => ({
+        hour: i,
+        revenue: 0,
+        orderCount: 0,
+        displayHour:
+          i === 0
+            ? "12 AM"
+            : i < 12
+            ? `${i} AM`
+            : i === 12
+            ? "12 PM"
+            : `${i - 12} PM`,
+      }));
 
     // Track table sessions similar to how average table time is calculated
     const tableVisits = {};
 
-    orders.forEach(order => {
+    orders.forEach((order) => {
       if (!order.order_date_time) return;
 
       const orderTime = new Date(order.order_date_time);
@@ -38,7 +47,7 @@ const PeakSalesHoursChart = ({ orders }) => {
       hourlyStats[hour].orderCount += 1;
 
       // Add to hourly revenue
-      hourlyStats[hour].revenue += (order.total_amount || 0);
+      hourlyStats[hour].revenue += order.total_amount || 0;
 
       // Track table sessions if table_token exists
       if (order.table_token) {
@@ -46,7 +55,7 @@ const PeakSalesHoursChart = ({ orders }) => {
           tableVisits[order.table_token] = {
             firstOrderTime: orderTime,
             lastActivityTime: orderTime,
-            hours: new Set([hour]) // Keep track of hours this table was active
+            hours: new Set([hour]), // Keep track of hours this table was active
           };
         } else {
           // Update first order time if this is earlier
@@ -55,9 +64,9 @@ const PeakSalesHoursChart = ({ orders }) => {
           }
 
           // Use completion time if available, otherwise use order time
-          const activityTime = order.completion_date_time ?
-            new Date(order.completion_date_time) :
-            orderTime;
+          const activityTime = order.completion_date_time
+            ? new Date(order.completion_date_time)
+            : orderTime;
 
           // Update last activity time if this is later
           if (activityTime > tableVisits[order.table_token].lastActivityTime) {
@@ -71,7 +80,7 @@ const PeakSalesHoursChart = ({ orders }) => {
     });
 
     // Add "table presence" data to our hourly stats
-    Object.values(tableVisits).forEach(visit => {
+    Object.values(tableVisits).forEach((visit) => {
       // For each table session, distribute its presence across the hours it was active
       const startHour = visit.firstOrderTime.getHours();
       const endHour = visit.lastActivityTime.getHours();
@@ -87,7 +96,7 @@ const PeakSalesHoursChart = ({ orders }) => {
       }
 
       // Increment table presence count for each hour
-      visit.hours.forEach(hour => {
+      visit.hours.forEach((hour) => {
         if (!hourlyStats[hour].tablePresence) {
           hourlyStats[hour].tablePresence = 0;
         }
@@ -122,15 +131,25 @@ const PeakSalesHoursChart = ({ orders }) => {
           <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
           <Tooltip
             formatter={(value, name) => {
-              if (name === 'Revenue') return [`$${value.toFixed(2)}`, name];
+              if (name === "Revenue") return [`฿${value.toFixed(2)}`, name];
               return [value, name];
             }}
           />
           <Legend />
           <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#8884d8" />
-          <Bar yAxisId="right" dataKey="orderCount" name="Order Count" fill="#82ca9d" />
+          <Bar
+            yAxisId="right"
+            dataKey="orderCount"
+            name="Order Count"
+            fill="#82ca9d"
+          />
           {hourlyData[0]?.tablePresence !== undefined && (
-            <Bar yAxisId="right" dataKey="tablePresence" name="Table Occupancy" fill="#ffc658" />
+            <Bar
+              yAxisId="right"
+              dataKey="tablePresence"
+              name="Table Occupancy"
+              fill="#ffc658"
+            />
           )}
         </BarChart>
       </ResponsiveContainer>

@@ -47,7 +47,7 @@ const PopularItems = ({ orders, menuItems }) => {
               <p className="text-sm text-gray-500">{item.orders} orders</p>
             </div>
             <span className="font-medium text-black">
-              ${item.revenue.toFixed(2)}
+              ฿{item.revenue.toFixed(2)}
             </span>
           </div>
         ))}

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 const Inventory = () => {
   const [inventoryItems, setInventoryItems] = useState([]);
   const { setIsLoading } = useLoading();
+  const [mounted, setMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddStockModalOpen, setIsAddStockModalOpen] = useState(false);
@@ -47,20 +48,23 @@ const Inventory = () => {
     : inventoryItems;
 
   const loadData = async () => {
-    setIsLoading(true);
     try {
       const data = await fetchInventoryData();
       setInventoryItems(data);
     } catch (error) {
       toast.error("Failed to load inventory data");
-    } finally {
-      setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    setMounted(true);
     loadData();
-  }, [setIsLoading]);
+  }, []);
+
+  // Don't render anything until after first mount
+  if (!mounted) {
+    return null;
+  }
 
   const handleDeleteClick = (productId) => {
     setProductToDelete(productId);
