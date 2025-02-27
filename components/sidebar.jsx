@@ -37,11 +37,6 @@ const Sidebar = () => {
       icon: <MdMenu className="text-2xl" />,
     },
     {
-      title: "Get Started",
-      path: "/admin/dashboard/getStarted",
-      icon: <MdPlayCircle className="text-2xl" />,
-    },
-    {
       title: "Settings",
       path: "/admin/dashboard/settings",
       icon: <MdSettings className="text-2xl" />,

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useLoading } from "@/components/common/LoadingContext";
 import TableTemplates from "@/components/layout/TableTemplates";
 import DraggableTable from "@/components/layout/DraggableTable";
 import {
@@ -10,8 +11,6 @@ import {
 } from "@/services/dataService";
 import { toast } from "sonner";
 
-
-
 const GRID_SIZE = 50;
 const CONTAINER_WIDTH = 1000;
 const CONTAINER_HEIGHT = 600;
@@ -19,6 +18,7 @@ const TABLE_SIZE = 100; // Assuming average table size of 100px
 
 const Layout = () => {
   const [tables, setTables] = useState([]);
+  const { setIsLoading } = useLoading();
   const [isSaving, setIsSaving] = useState(false);
 
   // Memoize formatTables function
@@ -35,14 +35,17 @@ const Layout = () => {
   }, []);
 
   const loadTables = useCallback(async () => {
+    setIsLoading(true);
     try {
       const data = await fetchTableData();
       setTables(formatTables(data));
     } catch (error) {
       console.error("Error loading tables:", error);
       toast.error("Failed to load table layout");
+    } finally {
+      setIsLoading(false);
     }
-  }, [formatTables]);
+  }, [formatTables, setIsLoading]);
 
   useEffect(() => {
     loadTables();
@@ -51,6 +54,7 @@ const Layout = () => {
   const saveToEC2 = useCallback(async () => {
     if (isSaving) return;
     setIsSaving(true);
+    setIsLoading(true);
 
     try {
       await saveTableLayout(tables);
@@ -59,8 +63,9 @@ const Layout = () => {
       toast.error(`Failed to save layout: ${error.message}`);
     } finally {
       setIsSaving(false);
+      setIsLoading(false);
     }
-  }, [tables, isSaving]);
+  }, [tables, isSaving, setIsLoading]);
 
   // Memoize predefined tables
   const predefinedTables = useMemo(
@@ -79,7 +84,7 @@ const Layout = () => {
   const keepInBounds = useCallback((x, y) => {
     return {
       x: Math.max(0, Math.min(x, CONTAINER_WIDTH - TABLE_SIZE)),
-      y: Math.max(0, Math.min(y, CONTAINER_HEIGHT - TABLE_SIZE))
+      y: Math.max(0, Math.min(y, CONTAINER_HEIGHT - TABLE_SIZE)),
     };
   }, []);
 
@@ -98,7 +103,7 @@ const Layout = () => {
       const dropZone = e.currentTarget.getBoundingClientRect();
       const rawX = e.clientX - dropZone.left - 50;
       const rawY = e.clientY - dropZone.top - 50;
-      
+
       const { x: boundedX, y: boundedY } = keepInBounds(
         snapToGrid(rawX),
         snapToGrid(rawY)
@@ -121,7 +126,9 @@ const Layout = () => {
         const tableId = parseInt(e.dataTransfer.getData("tableId"));
         setTables((prev) =>
           prev.map((table) =>
-            table.id === tableId ? { ...table, x: boundedX, y: boundedY } : table
+            table.id === tableId
+              ? { ...table, x: boundedX, y: boundedY }
+              : table
           )
         );
       }
@@ -129,26 +136,32 @@ const Layout = () => {
     [tables.length, snapToGrid, keepInBounds]
   );
 
-  const handleRemoveTable = useCallback(async (tableId) => {
-    try {
-      await deleteTable(tableId);
-      setTables((prev) => {
-        const updatedTables = prev.filter((table) => table.id !== tableId);
-        const tablesToCache = updatedTables.map((table) => ({
-          table_num: parseInt(table.id),
-          status: "Available",
-          capacity: parseInt(table.type[0]),
-          location: { x: parseInt(table.x), y: parseInt(table.y) },
-          rotation: parseInt(table.rotation),
-        }));
-        sessionStorage.setItem("tableLayout", JSON.stringify(tablesToCache));
-        return updatedTables;
-      });
-      toast.success("Table deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete table");
-    }
-  }, []);
+  const handleRemoveTable = useCallback(
+    async (tableId) => {
+      setIsLoading(true);
+      try {
+        await deleteTable(tableId);
+        setTables((prev) => {
+          const updatedTables = prev.filter((table) => table.id !== tableId);
+          const tablesToCache = updatedTables.map((table) => ({
+            table_num: parseInt(table.id),
+            status: "Available",
+            capacity: parseInt(table.type[0]),
+            location: { x: parseInt(table.x), y: parseInt(table.y) },
+            rotation: parseInt(table.rotation),
+          }));
+          sessionStorage.setItem("tableLayout", JSON.stringify(tablesToCache));
+          return updatedTables;
+        });
+        toast.success("Table deleted successfully");
+      } catch (error) {
+        toast.error("Failed to delete table");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [setIsLoading]
+  );
 
   const handleRotateTable = useCallback((tableId) => {
     setTables((prev) =>
@@ -179,9 +192,10 @@ const Layout = () => {
               text-base font-medium rounded-full shadow-sm text-white
               transition-all duration-200 focus:outline-none focus:ring-2 
               focus:ring-offset-2 focus:ring-indigo-500
-              ${isSaving
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
+              ${
+                isSaving
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
               }
             `}
           >
@@ -245,7 +259,6 @@ const Layout = () => {
                 onRemove={handleRemoveTable}
               />
             ))}
-
           </div>
         </div>
 
