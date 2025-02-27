@@ -37,7 +37,7 @@ const RecentOrders = ({ orders }) => {
                   {order.order_details.length}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
-                  ${order.total_amount.toFixed(2)}
+                  ฿{order.total_amount.toFixed(2)}
                 </td>
                 <td className="px-6 py-4 text-sm">
                   <span
