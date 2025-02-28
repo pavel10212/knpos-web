@@ -37,28 +37,11 @@ export default function MenuPage() {
     const fetchData = async () => {
         if (!token) return;
 
-        // Try to get data from sessionStorage first
-        if (typeof window !== 'undefined') {
-            const cachedMenuData = sessionStorage.getItem('menuData');
-            if (cachedMenuData) {
-                const parsedData = JSON.parse(cachedMenuData);
-                setDataItems(parsedData);
-                setMenuItems(parsedData.menuItems || []);
-                setInventoryItems(parsedData.inventoryItems || []);
-                return;
-            }
-        }
-
         try {
             const data = await fetchMenuData(token);
             setDataItems(data || []);
             setMenuItems(data.menuItems || []);
             setInventoryItems(data.inventoryItems || []);
-
-            // Store in sessionStorage
-            if (typeof window !== 'undefined') {
-                sessionStorage.setItem('menuData', JSON.stringify(data));
-            }
         } catch (error) {
             console.error("Error fetching menu data:", error);
             if (error.message.includes('401') || error.message.includes('403')) {
