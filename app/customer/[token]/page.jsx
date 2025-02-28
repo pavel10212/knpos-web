@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import React, {useEffect, useRef, useState} from "react";
+import {useParams} from "next/navigation";
 import Head from "next/head";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MenuItemCard from "@/components/MenuItemCard";
 import MenuItemModal from "@/components/MenuItemModal";
-import { useCartStore, useDataStore } from "@/store/customerStore";
-import { fetchCategoryData, fetchMenuData } from "@/services/dataService";
+import {useCartStore, useDataStore} from "@/store/customerStore";
+import {fetchCategoryData, fetchMenuData} from "@/services/dataService";
 import InventoryItemCard from "@/components/InventoryItemCard";
 
 export default function MenuPage() {
@@ -18,7 +18,7 @@ export default function MenuPage() {
     const [error, setError] = useState(null);
     const [token, setToken] = useState(null);
     const categoryRefs = useRef({});
-    const { addToCart } = useCartStore();
+    const {addToCart} = useCartStore();
     const params = useParams();
     const setMenuItems = useDataStore((state) => state.setMenuItems);
     const setInventoryItems = useDataStore((state) => state.setInventoryItems);
@@ -39,11 +39,14 @@ export default function MenuPage() {
 
         // Try to get data from sessionStorage first
         if (typeof window !== 'undefined') {
-            const parsedData = JSON.parse(cachedMenuData);
-            setDataItems(parsedData);
-            setMenuItems(parsedData.menuItems || []);
-            setInventoryItems(parsedData.inventoryItems || []);
-            return;
+            const cachedMenuData = sessionStorage.getItem('menuData');
+            if (cachedMenuData) {
+                const parsedData = JSON.parse(cachedMenuData);
+                setDataItems(parsedData);
+                setMenuItems(parsedData.menuItems || []);
+                setInventoryItems(parsedData.inventoryItems || []);
+                return;
+            }
         }
 
         try {
@@ -52,6 +55,10 @@ export default function MenuPage() {
             setMenuItems(data.menuItems || []);
             setInventoryItems(data.inventoryItems || []);
 
+            // Store in sessionStorage
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('menuData', JSON.stringify(data));
+            }
         } catch (error) {
             console.error("Error fetching menu data:", error);
             if (error.message.includes('401') || error.message.includes('403')) {
@@ -132,11 +139,11 @@ export default function MenuPage() {
                 <div className="flex flex-col min-h-screen">
                     <Head>
                         <title>Menu - Restaurant</title>
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                        <meta name="description" content="View our menu and place orders!" />
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                        <meta name="description" content="View our menu and place orders!"/>
                     </Head>
 
-                    <Header categories={categories} onCategoryClick={handleCategoryClick} />
+                    <Header categories={categories} onCategoryClick={handleCategoryClick}/>
                     <main className="container mx-auto p-4 flex-grow pb-20 bg-white">
                         <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">
                             Choose the best dish for you
@@ -186,7 +193,7 @@ export default function MenuPage() {
                         </div>
                     </main>
 
-                    <Footer token={token} />
+                    <Footer token={token}/>
 
                     {selectedItem && (
                         <MenuItemModal
