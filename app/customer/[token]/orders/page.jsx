@@ -39,6 +39,7 @@ export default function Orders() {
     return null;
   });
 
+
   const transformOrderItems = useCallback((items = []) => {
     if (!Array.isArray(items)) return [];
 
@@ -72,10 +73,6 @@ export default function Orders() {
   }, [inventoryItems, menuItems]);
 
   // Memoize grand total calculation
-  const grandTotal = useMemo(() =>
-    orders.reduce((sum, order) => sum + calculateOrderTotal(order), 0),
-    [orders, calculateOrderTotal]
-  );
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -148,7 +145,7 @@ export default function Orders() {
                     const transformedItem = transformOrderItems([item])[0];
                     return (
                       <div
-                        key={`${item.type}-${item.type === 'inventory' ? item.inventory_item_id : item.menu_item_id}`}
+                        key={item.cartItemId}
                         className="flex flex-col text-sm"
                       >
                         <div className="flex justify-between text-gray-900">
