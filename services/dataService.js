@@ -37,6 +37,25 @@ export const callWaiter = async (table_token) => {
   }
 };
 
+export const callWaiterForBill = async (table_token) => {
+  try {
+    const response = await fetch("/api/table-call-waiter-for-bill/get", {
+      headers: {
+        "Content-Type": "application/json",
+        "table-token": table_token,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to call waiter for bill");
+    }
+  } catch (error) {
+    console.error("Error calling waiter for bill:", error);
+    throw error;
+  }
+};
+
+
 export const createInventoryItem = async (newProduct) => {
   try {
     const response = await fetch("/api/inventory/create", {

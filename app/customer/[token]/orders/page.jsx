@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useDataStore } from "@/store/customerStore";
+import { callWaiterForBill } from "@/services/dataService";
 import { useRouter } from "next/navigation";
 import { fetchCustomerOrders } from "@/services/dataService";
 
@@ -61,6 +62,40 @@ export default function Orders() {
     });
   }, [inventoryItems, menuItems]);
 
+  // Group identical items function
+  const groupIdenticalItems = useCallback((items) => {
+    const groupedItems = [];
+    const itemMap = new Map();
+    
+    items.forEach(item => {
+      // Create a unique key combining product ID and notes
+      const itemType = item.type || 'menu';
+      const itemId = itemType === 'inventory' ? item.inventory_item_id : item.menu_item_id;
+      const request = item.request || '';
+      const status = item.status || '';
+      
+      const key = `${itemType}-${itemId}-${request}-${status}`;
+      
+      if (itemMap.has(key)) {
+        // Increment quantity for existing item
+        const existingItem = itemMap.get(key);
+        existingItem.quantity += item.quantity;
+        existingItem.originalItems.push(item);
+      } else {
+        // Create a new group with this item
+        const groupedItem = {
+          ...item,
+          originalItems: [item],
+          groupId: key
+        };
+        itemMap.set(key, groupedItem);
+        groupedItems.push(groupedItem);
+      }
+    });
+    
+    return groupedItems;
+  }, []);
+
   const calculateOrderTotal = useCallback((order) => {
     const orderDetails = parseOrderDetails(order.order_details);
     return orderDetails.reduce((total, item) => {
@@ -73,6 +108,11 @@ export default function Orders() {
   }, [inventoryItems, menuItems]);
 
   // Memoize grand total calculation
+  const grandTotal = useMemo(() => {
+    return orders.reduce((total, order) => {
+      return total + calculateOrderTotal(order);
+    }, 0);
+  }, [orders, calculateOrderTotal]);
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -96,88 +136,145 @@ export default function Orders() {
   }, [token]);
 
   const handleSettleBill = useCallback(() => {
+
     alert("Waiter has been notified and will bring your bill shortly!");
+    callWaiterForBill(token)
   }, []);
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-32">
+    <div className="bg-gray-100 min-h-screen pb-32 relative">
       <div className="container mx-auto p-4 max-w-2xl">
         <div className="flex items-center gap-4 mb-6">
-          <button onClick={() => router.back()} className="bg-gray-100 text-black px-4 py-2 rounded-full">
-            ← Back
+          <button
+            onClick={() => router.back()}
+            className="bg-white text-gray-800 px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200 flex items-center"
+          >
+            <span className="mr-1">←</span> Back
           </button>
           <h1 className="text-2xl font-bold text-gray-900">Order History</h1>
         </div>
 
         {orders.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-black mb-4">No orders yet</p>
-            <button onClick={() => router.back()} className="bg-yellow-500 text-white px-6 py-2 rounded-full">
-              Go to Menu
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm animate-fadeIn">
+            <div className="mb-4">
+              <svg className="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <p className="text-gray-600 mb-6">You haven't placed any orders yet</p>
+            <button
+              onClick={() => router.back()}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              Browse the Menu
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <div key={order.order_id} className="bg-white rounded-lg shadow-sm p-4">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-sm text-gray-700">
-                      {formatDate(order.order_date_time)}
-                    </p>
-                    <p className="font-semibold text-gray-900">
-                      Order #{order.order_id} • Table {order.table_num}
-                    </p>
+          <div className="space-y-5">
+            {orders.map((order) => {
+              // Parse and group order details
+              const orderDetails = parseOrderDetails(order.order_details);
+              const transformedItems = transformOrderItems(orderDetails);
+              const groupedItems = groupIdenticalItems(transformedItems);
+              
+              return (
+                <div 
+                  key={order.order_id} 
+                  className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">
+                        {formatDate(order.order_date_time)}
+                      </p>
+                      <p className="font-semibold text-gray-900 text-lg">
+                        Order #{order.order_id} • Table {order.table_num}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${order.order_status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                        order.order_status === 'Ready' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                      }`}>
+                      {order.order_status}
+                    </span>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-sm ${order.order_status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                    order.order_status === 'Ready' ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                    {order.order_status}
-                  </span>
-                </div>
 
-                <div className="space-y-2">
-                  {(Array.isArray(order.order_details)
-                    ? order.order_details
-                    : JSON.parse(order.order_details || '[]')
-                  ).map((item) => {
-                    const transformedItem = transformOrderItems([item])[0];
-                    return (
+                  <div className="space-y-3 mt-4">
+                    {groupedItems.map((item) => (
                       <div
-                        key={item.cartItemId}
-                        className="flex flex-col text-sm"
+                        key={item.groupId}
+                        className="flex flex-col text-sm border-b border-gray-100 pb-2 last:border-b-0"
                       >
                         <div className="flex justify-between text-gray-900">
                           <div className="flex items-center gap-2">
-                            <span>{transformedItem.quantity}x {transformedItem.name}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${transformedItem.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                            <span className="font-medium">{item.quantity}x</span> 
+                            <span>{item.name}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              item.status === 'Completed' ? 'bg-green-100 text-green-800' :
                               'bg-gray-100 text-gray-800'
-                              }`}>
-                              {transformedItem.status}
+                            }`}>
+                              {item.status}
                             </span>
                           </div>
-                          <span>{transformedItem.price} THB</span>
+                          <span>{(item.quantity * item.price).toFixed(2)} THB</span>
                         </div>
-                        {transformedItem.request && (
-                          <p className="text-xs text-gray-500 ml-4">Note: {transformedItem.request}</p>
+                        {item.request && (
+                          <p className="text-xs text-gray-500 ml-6 mt-1">Note: {item.request}</p>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
 
-                <div className="mt-4 pt-4 border-t">
-                  <div className="flex justify-between font-bold text-gray-900">
-                    <span>Total</span>
-                    <span>{calculateOrderTotal(order).toFixed(2)} THB</span>
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <div className="flex justify-between font-bold text-gray-900">
+                      <span>Order Total</span>
+                      <span>{calculateOrderTotal(order).toFixed(2)} THB</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
+      {orders.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 p-4 animate-slideUp">
+          <div className="container mx-auto max-w-2xl">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="font-semibold text-lg text-gray-900">Orders Summary</h2>
+              <span className="text-xs text-gray-500">{orders.length} order{orders.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="flex justify-between font-bold text-gray-900 text-xl mb-4">
+              <span>Total Amount</span>
+              <span>{grandTotal.toFixed(2)} THB</span>
+            </div>
+            <button
+              onClick={handleSettleBill}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+            >
+              Request Bill
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out;
+        }
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
