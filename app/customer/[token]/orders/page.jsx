@@ -128,6 +128,7 @@ export default function Orders() {
         }
       } catch (error) {
         console.error("Error fetching orders:", error);
+        // Don't show an error message here, we'll handle it in the return statement
         setOrders([]);
       }
     };
@@ -136,10 +137,26 @@ export default function Orders() {
   }, [token]);
 
   const handleSettleBill = useCallback(() => {
-
     alert("Waiter has been notified and will bring your bill shortly!");
     callWaiterForBill(token)
   }, []);
+
+  // If token is missing or invalid, show a friendly goodbye message
+  if (!token) {
+    return (
+      <div className="bg-gray-100 min-h-screen flex items-center justify-center">
+        <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-yellow-600 mb-4">Thank You!</h2>
+          <p className="text-gray-700 mb-4">
+            Thank you for dining with us! We hope to see you again soon.
+          </p>
+          <p className="text-gray-600">
+            Your session has ended. We appreciate your business!
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-100 min-h-screen pb-32 relative">

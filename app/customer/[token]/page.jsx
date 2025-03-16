@@ -44,14 +44,11 @@ export default function MenuPage() {
             setInventoryItems(data.inventoryItems || []);
         } catch (error) {
             console.error("Error fetching menu data:", error);
-            if (error.message.includes('401') || error.message.includes('403')) {
-                if (typeof window !== 'undefined') {
-                    sessionStorage.removeItem('token');
-                }
-                setError("Session expired or invalid token. Please request a new table link.");
-            } else {
-                setError("Connection error. Please check your network and try again.");
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('token');
             }
+            // Always show a friendly message, never show a connection error
+            setError("Thank you for dining with us! We hope to see you again soon.");
         }
     };
 
@@ -111,11 +108,17 @@ export default function MenuPage() {
             {error ? (
                 <div className="min-h-screen flex items-center justify-center bg-gray-50">
                     <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">
-                        <h2 className="text-2xl font-bold text-red-600 mb-4">Access Problem</h2>
-                        <p className="text-red-700 mb-4">{error}</p>
-                        <p className="text-gray-600">
-                            Please ask your server for a new table link or check your URL.
-                        </p>
+                        <h2 className="text-2xl font-bold text-yellow-600 mb-4">Thank You!</h2>
+                        <p className="text-gray-700 mb-4">{error}</p>
+                        {error.includes("Thank you for dining with us") ? (
+                            <p className="text-gray-600">
+                                Your session has ended. We appreciate your business!
+                            </p>
+                        ) : (
+                            <p className="text-gray-600">
+                                Please ask your server for a new table link or check your URL.
+                            </p>
+                        )}
                     </div>
                 </div>
             ) : (
