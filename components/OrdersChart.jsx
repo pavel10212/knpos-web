@@ -9,6 +9,7 @@ import {
   Legend,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { useMemo, useId } from "react";
 
 ChartJS.register(
   CategoryScale,
@@ -20,8 +21,14 @@ ChartJS.register(
   Legend
 );
 
+// Create a unique chart ID to prevent React key conflicts
+const chartId = Math.random().toString(36).substring(2, 15);
+
 const OrdersChart = ({ orders, period = "weekly" }) => {
-  const processOrderData = () => {
+  // Generate stable unique ID for this component
+  const uniqueId = useId();
+
+  const { labels, values } = useMemo(() => {
     let ordersByDate = {};
     const today = new Date();
 
@@ -114,14 +121,13 @@ const OrdersChart = ({ orders, period = "weekly" }) => {
       labels: sortedDates,
       values: sortedDates.map((date) => ordersByDate[date]),
     };
-  };
-
-  const { labels, values } = processOrderData();
+  }, [orders, period]);
 
   const data = {
     labels,
     datasets: [
       {
+        id: `orders-dataset-${uniqueId}`, // Add unique id to dataset
         label: "Number of Orders",
         data: values,
         borderColor: "rgb(59, 130, 246)",
@@ -133,9 +139,13 @@ const OrdersChart = ({ orders, period = "weekly" }) => {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: true,
     plugins: {
       legend: {
         position: "top",
+      },
+      tooltip: {
+        enabled: true,
       },
     },
     scales: {
@@ -146,11 +156,23 @@ const OrdersChart = ({ orders, period = "weekly" }) => {
         },
       },
     },
+    animation: {
+      duration: 0, // Disable animations to prevent key conflicts
+    },
   };
+
+  // Use a combination of period, uniqueId and a stable random value as key
+  const uniqueChartKey = `orders-chart-${period}-${uniqueId}-${chartId}`;
 
   return (
     <div className="bg-blue-50 p-2 rounded-lg shadow-lg">
-      <Line options={options} data={data} />
+      <Line 
+        options={options} 
+        data={data} 
+        id={uniqueChartKey} 
+        key={uniqueChartKey}
+        redraw={true} // Force redraw on each render
+      />
     </div>
   );
 };

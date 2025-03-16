@@ -36,7 +36,10 @@ export default function Reports() {
   }, [setIsLoading]);
 
   const stats = useMemo(() => {
-    const orders = Array.isArray(data.orders) ? data.orders : [];
+    const allOrders = Array.isArray(data.orders) ? data.orders : [];
+    // Filter for only completed orders
+    const orders = allOrders.filter(order => order.order_status === "Completed");
+    
     if (!orders.length)
       return {
         dailySales: 0,
@@ -587,14 +590,16 @@ export default function Reports() {
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <RecentOrders
                 orders={
-                  Array.isArray(data.orders) ? data.orders.slice(0, 4) : []
+                  Array.isArray(data.orders) 
+                    ? data.orders.filter(order => order.order_status === "Completed").slice(0, 4) 
+                    : []
                 }
               />
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <PopularItems
-                orders={Array.isArray(data.orders) ? data.orders : []}
+                orders={Array.isArray(data.orders) ? data.orders.filter(order => order.order_status === "Completed") : []}
                 menuItems={Array.isArray(data.menuItems) ? data.menuItems : []}
               />
             </div>
@@ -701,7 +706,10 @@ export default function Reports() {
                     onChange={setChartPeriod}
                   />
                 </div>
-                <OrdersChart orders={data.orders} period={chartPeriod} />
+                <OrdersChart 
+                  orders={Array.isArray(data.orders) ? data.orders.filter(order => order.order_status === "Completed") : []} 
+                  period={chartPeriod}
+                />
               </div>
             </div>
 
@@ -710,7 +718,9 @@ export default function Reports() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
                   Monthly Revenue
                 </h2>
-                <MonthlyRevenueChart orders={data.orders} />
+                <MonthlyRevenueChart 
+                  orders={Array.isArray(data.orders) ? data.orders.filter(order => order.order_status === "Completed") : []}
+                />
               </div>
             </div>
 
@@ -720,7 +730,7 @@ export default function Reports() {
                   Peak Sales Hours
                 </h2>
                 <PeakSalesHoursChart
-                  orders={Array.isArray(data.orders) ? data.orders : []}
+                  orders={Array.isArray(data.orders) ? data.orders.filter(order => order.order_status === "Completed") : []}
                 />
               </div>
             </div>

@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useMemo, useId } from "react";
 
 ChartJS.register(
   CategoryScale,
@@ -20,8 +21,14 @@ ChartJS.register(
   Legend
 );
 
+// Create a unique static chart ID to prevent React key conflicts
+const chartId = Math.random().toString(36).substring(2, 15);
+
 const MonthlyRevenueChart = ({ orders }) => {
-  const processMonthlyData = () => {
+  // Generate stable unique ID for this component
+  const uniqueId = useId();
+
+  const { labels, values } = useMemo(() => {
     let monthlyData = {};
     const today = new Date();
 
@@ -57,14 +64,13 @@ const MonthlyRevenueChart = ({ orders }) => {
       labels: sortedMonths,
       values: sortedMonths.map((month) => monthlyData[month]),
     };
-  };
-
-  const { labels, values } = processMonthlyData();
+  }, [orders]);
 
   const chartData = {
     labels,
     datasets: [
       {
+        id: `monthly-revenue-dataset-${uniqueId}`, // Add unique id to dataset
         label: "Monthly Revenue",
         data: values,
         borderColor: "rgb(75, 192, 192)",
@@ -89,11 +95,23 @@ const MonthlyRevenueChart = ({ orders }) => {
         },
       },
     },
+    animation: {
+      duration: 0, // Disable animations to prevent key conflicts
+    },
   };
 
+  // Use a combination of uniqueId and a stable random value as key
+  const uniqueChartKey = `monthly-revenue-${uniqueId}-${chartId}`;
+
   return (
-    <div className="bg-blue-50 p-2 rounded-lg shadow-lg ">
-      <Line data={chartData} options={options} />
+    <div className="bg-blue-50 p-2 rounded-lg shadow-lg">
+      <Line 
+        data={chartData} 
+        options={options} 
+        id={uniqueChartKey} 
+        key={uniqueChartKey} 
+        redraw={true} // Force redraw on each render
+      />
     </div>
   );
 };

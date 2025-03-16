@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useId } from "react";
 import {
   BarChart,
   Bar,
@@ -11,6 +11,9 @@ import {
 } from "recharts";
 
 const PeakSalesHoursChart = ({ orders }) => {
+  // Generate a unique ID for this component instance
+  const uniqueId = useId();
+
   const hourlyData = useMemo(() => {
     // Early return if no orders
     if (!Array.isArray(orders) || orders.length === 0) {
@@ -21,6 +24,7 @@ const PeakSalesHoursChart = ({ orders }) => {
     const hourlyStats = Array(24)
       .fill()
       .map((_, i) => ({
+        id: `hour-${i}-${uniqueId}`, // Add unique ID to each data point
         hour: i,
         revenue: 0,
         orderCount: 0,
@@ -105,7 +109,7 @@ const PeakSalesHoursChart = ({ orders }) => {
     });
 
     return hourlyStats;
-  }, [orders]);
+  }, [orders, uniqueId]);
 
   return (
     <div className="h-80">
@@ -118,6 +122,7 @@ const PeakSalesHoursChart = ({ orders }) => {
             left: 20,
             bottom: 30,
           }}
+          key={uniqueId}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
@@ -134,14 +139,24 @@ const PeakSalesHoursChart = ({ orders }) => {
               if (name === "Revenue") return [`฿${value.toFixed(2)}`, name];
               return [value, name];
             }}
+            isAnimationActive={false}
           />
           <Legend />
-          <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#8884d8" />
+          <Bar 
+            yAxisId="left" 
+            dataKey="revenue" 
+            name="Revenue" 
+            fill="#8884d8" 
+            key={`revenue-${uniqueId}`}
+            isAnimationActive={false}
+          />
           <Bar
             yAxisId="right"
             dataKey="orderCount"
             name="Order Count"
             fill="#82ca9d"
+            key={`order-count-${uniqueId}`}
+            isAnimationActive={false}
           />
           {hourlyData[0]?.tablePresence !== undefined && (
             <Bar
@@ -149,6 +164,8 @@ const PeakSalesHoursChart = ({ orders }) => {
               dataKey="tablePresence"
               name="Table Occupancy"
               fill="#ffc658"
+              key={`table-presence-${uniqueId}`}
+              isAnimationActive={false}
             />
           )}
         </BarChart>
