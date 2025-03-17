@@ -5,12 +5,15 @@ import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminStore } from "@/store/adminStore";
+import { verifyAdminPassword } from "@/services/dataService";
+import { toast } from "sonner";
 
 const Page = () => {
   const router = useRouter();
   const pinRef = useRef();
   const [pinValue, setPinValue] = useState("");
   const [loading, setLoading] = useState(true);
+  const [password, setPassword] = useState("");
   const { setIsAdmin, isAdmin } = useAdminStore();
 
   useEffect(() => {
@@ -21,12 +24,26 @@ const Page = () => {
     setLoading(false);
   }, [isAdmin, router]);
 
-  useEffect(() => {
-    if (pinValue === "1234") {
-      setIsAdmin();
-      router.push("/admin/dashboard");
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const isValid = await verifyAdminPassword(password);
+      
+      if (isValid) {
+        setIsAdmin();
+        router.push("/admin/dashboard");
+      } else {
+        toast.error("Invalid password");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }, [pinValue, setIsAdmin, router]);
+  };
 
   if (loading) {
     return (
@@ -52,18 +69,31 @@ const Page = () => {
       <div className="flex items-center justify-center bg-[#7F8CD9]">
         <div className="max-w-md w-full p-8 bg-white backdrop-blur-sm rounded-lg shadow-lg">
           <h1 className="text-2xl font-semibold text-center text-black mb-6">
-            Enter Security PIN
+            Admin Login
           </h1>
 
-          <div className="items-center justify-center flex">
-            <PinField
-              ref={pinRef}
-              onChange={(pinCode) => setPinValue(pinCode)}
-              validate="0123456789"
-              length={4}
-              className="w-12 text-gray-400 h-11 border-2 border-gray-300 rounded-lg mx-1 text-center text-xl font-semibold focus:border-purple-500 focus:outline-none transition-colors"
-            />
-          </div>
+          <form onSubmit={handlePasswordSubmit}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                placeholder="Enter your admin password"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 px-4 mt-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            >
+              Login
+            </button>
+          </form>
         </div>
       </div>
     </div>

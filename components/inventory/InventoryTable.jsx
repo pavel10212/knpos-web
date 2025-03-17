@@ -53,7 +53,7 @@ const InventoryTable = ({ data, onEdit, onDelete, onAddStock }) => {
               <tr key={item.inventory_item_id} className={stockStatus.className}>
                 <td className="px-6 py-4 text-black">{item.inventory_item_id}</td>
                 <td className="px-6 py-4 text-black">{item.inventory_item_name}</td>
-                <td className="px-6 py-4 text-black">${parseFloat(item.cost_per_unit).toFixed(2)}</td>
+                <td className="px-6 py-4 text-black">฿{parseFloat(item.cost_per_unit).toFixed(2)}</td>
                 <td className="px-6 py-4 text-black">{item.category}</td>
                 <td className="px-6 py-4 text-black">{item.sales_channel}</td>
                 <td className="px-6 py-4 whitespace-nowrap">

@@ -373,3 +373,76 @@ export const deleteMenuItem = async (itemId) => {
     throw error;
   }
 };
+
+export const fetchAdminSettings = async () => {
+  try {
+    const response = await fetch("/api/admin-settings/get");
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to fetch admin settings");
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching admin settings:", error);
+    throw error;
+  }
+};
+
+export const updateAdminSettings = async (settings) => {
+  try {
+    const response = await fetch("/api/admin-settings/update", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to update admin settings");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating admin settings:", error);
+    throw error;
+  }
+};
+
+export const createAdminSettings = async (settings) => {
+  try {
+    const response = await fetch("/api/admin-settings/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to create admin settings");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error creating admin settings:", error);
+    throw error;
+  }
+};
+
+export const verifyAdminPassword = async (password) => {
+  try {
+    const response = await fetch("/api/admin-settings/get");
+    if (!response.ok) {
+      throw new Error("Failed to verify admin password");
+    }
+    const settings = await response.json();
+    
+    // Find the admin_password setting
+    const passwordSetting = settings.find(setting => setting.setting_key === 'admin_password');
+    
+    if (!passwordSetting) {
+      return false;
+    }
+    
+    return password === passwordSetting.setting_value;
+  } catch (error) {
+    console.error("Error verifying admin password:", error);
+    return false;
+  }
+};
