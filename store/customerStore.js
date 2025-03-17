@@ -112,26 +112,49 @@ export const useCartStore = create((set, get) => ({
     try {
       const tableNum = await fetchTableNumber(token);
 
-      console.log("Other total:", total);
-
-      const orderDetails = {
-        table_num: tableNum.toString(),
-        order_status: "Pending",
-        total_amount: total, 
-        order_date_time: new Date().toISOString(),
-        completion_date_time: null,
-        order_details: JSON.stringify(
-          cart.map((item) => ({
+      // Group inventory items, keep menu items individual
+      const groupedCart = cart.reduce((acc, item) => {
+        if (item.type === 'menu') {
+          // Keep menu items individual
+          acc.push({
             type: item.type,
             status: "pending",
             cartItemId: item.cartItemId,
             quantity: 1,
             request: item.request,
-            ...(item.type === "inventory"
-              ? { inventory_item_id: parseInt(item.inventory_item_id) }
-              : { menu_item_id: item.menu_item_id }),
-          }))
-        ),
+            menu_item_id: item.menu_item_id
+          });
+        } else {
+          // Stack inventory items
+          const existingItem = acc.find(i => 
+            i.type === 'inventory' && 
+            i.inventory_item_id === parseInt(item.inventory_item_id) &&
+            i.request === item.request
+          );
+
+          if (existingItem) {
+            existingItem.quantity += 1;
+          } else {
+            acc.push({
+              type: item.type,
+              status: "pending",
+              cartItemId: item.cartItemId,
+              quantity: 1,
+              request: item.request,
+              inventory_item_id: parseInt(item.inventory_item_id)
+            });
+          }
+        }
+        return acc;
+      }, []);
+
+      const orderDetails = {
+        table_num: tableNum.toString(),
+        order_status: "Pending",
+        total_amount: total,
+        order_date_time: new Date().toISOString(),
+        completion_date_time: null,
+        order_details: JSON.stringify(groupedCart)
       };
 
       const response = await fetch("/api/orders/create", {

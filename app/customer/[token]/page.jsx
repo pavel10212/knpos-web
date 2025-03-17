@@ -16,6 +16,7 @@ export default function MenuPage() {
     const [categories, setCategories] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [token, setToken] = useState(null);
     const categoryRefs = useRef({});
     const {addToCart} = useCartStore();
@@ -33,22 +34,37 @@ export default function MenuPage() {
         }
     }, [params.token]);
 
-
     const fetchData = async () => {
         if (!token) return;
 
         try {
+            setLoading(true);
             const data = await fetchMenuData(token);
+            
+            if (!data || (!data.menuItems && !data.inventoryItems)) {
+                throw new Error('No menu data available');
+            }
+
             setDataItems(data || []);
             setMenuItems(data.menuItems || []);
             setInventoryItems(data.inventoryItems || []);
+            setError(null);
         } catch (error) {
             console.error("Error fetching menu data:", error);
             if (typeof window !== 'undefined') {
                 sessionStorage.removeItem('token');
             }
-            // Always show a friendly message, never show a connection error
-            setError("Thank you for dining with us! We hope to see you again soon.");
+
+            // Handle different types of errors
+            if (error.message === 'Request timed out. Please try again.') {
+                setError("The menu is taking longer than expected to load. Please refresh the page to try again.");
+            } else if (error.message === 'No menu data available') {
+                setError("The menu is currently unavailable. Please try again in a few minutes.");
+            } else {
+                setError("Thank you for dining with us! We hope to see you again soon.");
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
