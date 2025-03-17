@@ -1,46 +1,31 @@
-import { Line } from "react-chartjs-2";
+import React, { useMemo } from "react";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
   Legend,
-} from "chart.js";
-import { useMemo, useId } from "react";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-// Create a unique static chart ID to prevent React key conflicts
-const chartId = Math.random().toString(36).substring(2, 15);
+  ResponsiveContainer,
+} from "recharts";
 
 const MonthlyRevenueChart = ({ orders }) => {
-  // Generate stable unique ID for this component
-  const uniqueId = useId();
-
-  const { labels, values } = useMemo(() => {
-    let monthlyData = {};
+  const monthlyData = useMemo(() => {
+    let data = {};
     const today = new Date();
 
     // Initialize last 12 months
     for (let i = 11; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      monthlyData[
-        date.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-        })
-      ] = 0;
+      const monthKey = date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      });
+      data[monthKey] = {
+        month: monthKey,
+        revenue: 0,
+      };
     }
 
     // Add revenue for each order
@@ -51,67 +36,54 @@ const MonthlyRevenueChart = ({ orders }) => {
         month: "long",
       });
 
-      if (monthKey in monthlyData) {
-        monthlyData[monthKey] += order.total_amount;
+      if (monthKey in data) {
+        data[monthKey].revenue += order.total_amount;
       }
     });
 
-    const sortedMonths = Object.keys(monthlyData).sort(
-      (a, b) => new Date(a) - new Date(b)
+    // Convert to array and sort
+    return Object.values(data).sort(
+      (a, b) => new Date(a.month) - new Date(b.month)
     );
-
-    return {
-      labels: sortedMonths,
-      values: sortedMonths.map((month) => monthlyData[month]),
-    };
   }, [orders]);
 
-  const chartData = {
-    labels,
-    datasets: [
-      {
-        id: `monthly-revenue-dataset-${uniqueId}`, // Add unique id to dataset
-        label: "Monthly Revenue",
-        data: values,
-        borderColor: "rgb(75, 192, 192)",
-        tension: 0.1,
-        fill: false,
-      },
-    ],
-  };
-
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: (value) => `$${value}`,
-        },
-      },
-    },
-    animation: {
-      duration: 0, // Disable animations to prevent key conflicts
-    },
-  };
-
-  // Use a combination of uniqueId and a stable random value as key
-  const uniqueChartKey = `monthly-revenue-${uniqueId}-${chartId}`;
-
   return (
-    <div className="bg-blue-50 p-2 rounded-lg shadow-lg">
-      <Line 
-        data={chartData} 
-        options={options} 
-        id={uniqueChartKey} 
-        key={uniqueChartKey} 
-        redraw={true} // Force redraw on each render
-      />
+    <div className="h-80">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={monthlyData}
+          margin={{
+            top: 20,
+            right: 30,
+            left: 20,
+            bottom: 30,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis 
+            dataKey="month" 
+            angle={-45}
+            textAnchor="end"
+            height={60}
+            interval={0}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis
+            tickFormatter={(value) => `฿${value.toFixed(0)}`}
+          />
+          <Tooltip 
+            formatter={(value) => [`฿${value.toFixed(2)}`, "Revenue"]}
+          />
+          <Legend />
+          <Line
+            type="monotone"
+            dataKey="revenue"
+            name="Monthly Revenue"
+            stroke="#4ade80"
+            activeDot={{ r: 8 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 };

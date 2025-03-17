@@ -11,20 +11,17 @@ import {
 } from "recharts";
 
 const PeakSalesHoursChart = ({ orders }) => {
-  // Generate a unique ID for this component instance
   const uniqueId = useId();
 
   const hourlyData = useMemo(() => {
-    // Early return if no orders
     if (!Array.isArray(orders) || orders.length === 0) {
       return [];
     }
 
-    // Initialize hours data structure (0-23 hours)
     const hourlyStats = Array(24)
       .fill()
       .map((_, i) => ({
-        id: `hour-${i}-${uniqueId}`, // Add unique ID to each data point
+        id: `hour-${i}-${uniqueId}`,
         hour: i,
         revenue: 0,
         orderCount: 0,
@@ -38,7 +35,7 @@ const PeakSalesHoursChart = ({ orders }) => {
             : `${i - 12} PM`,
       }));
 
-    // Track table sessions similar to how average table time is calculated
+    // Track table sessions
     const tableVisits = {};
 
     orders.forEach((order) => {
@@ -47,49 +44,38 @@ const PeakSalesHoursChart = ({ orders }) => {
       const orderTime = new Date(order.order_date_time);
       const hour = orderTime.getHours();
 
-      // Add to hourly order count
       hourlyStats[hour].orderCount += 1;
-
-      // Add to hourly revenue
       hourlyStats[hour].revenue += order.total_amount || 0;
 
-      // Track table sessions if table_token exists
       if (order.table_token) {
         if (!tableVisits[order.table_token]) {
           tableVisits[order.table_token] = {
             firstOrderTime: orderTime,
             lastActivityTime: orderTime,
-            hours: new Set([hour]), // Keep track of hours this table was active
+            hours: new Set([hour]),
           };
         } else {
-          // Update first order time if this is earlier
           if (orderTime < tableVisits[order.table_token].firstOrderTime) {
             tableVisits[order.table_token].firstOrderTime = orderTime;
           }
 
-          // Use completion time if available, otherwise use order time
           const activityTime = order.completion_date_time
             ? new Date(order.completion_date_time)
             : orderTime;
 
-          // Update last activity time if this is later
           if (activityTime > tableVisits[order.table_token].lastActivityTime) {
             tableVisits[order.table_token].lastActivityTime = activityTime;
           }
 
-          // Add this hour to the set of active hours for this table
           tableVisits[order.table_token].hours.add(hour);
         }
       }
     });
 
-    // Add "table presence" data to our hourly stats
     Object.values(tableVisits).forEach((visit) => {
-      // For each table session, distribute its presence across the hours it was active
       const startHour = visit.firstOrderTime.getHours();
       const endHour = visit.lastActivityTime.getHours();
 
-      // If session spans multiple hours, mark all those hours
       if (startHour !== endHour) {
         let currentHour = startHour;
         while (currentHour !== endHour) {
@@ -99,17 +85,15 @@ const PeakSalesHoursChart = ({ orders }) => {
         visit.hours.add(endHour);
       }
 
-      // Increment table presence count for each hour
       visit.hours.forEach((hour) => {
-        if (!hourlyStats[hour].tablePresence) {
-          hourlyStats[hour].tablePresence = 0;
-        }
-        hourlyStats[hour].tablePresence += 1;
+        hourlyStats[hour].tablePresence = (hourlyStats[hour].tablePresence || 0) + 1;
       });
     });
 
     return hourlyStats;
   }, [orders, uniqueId]);
+
+  const chartId = `peak-sales-${uniqueId}`;
 
   return (
     <div className="h-80">
@@ -122,7 +106,7 @@ const PeakSalesHoursChart = ({ orders }) => {
             left: 20,
             bottom: 30,
           }}
-          key={uniqueId}
+          id={chartId}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
@@ -139,24 +123,21 @@ const PeakSalesHoursChart = ({ orders }) => {
               if (name === "Revenue") return [`฿${value.toFixed(2)}`, name];
               return [value, name];
             }}
-            isAnimationActive={false}
           />
           <Legend />
-          <Bar 
-            yAxisId="left" 
-            dataKey="revenue" 
-            name="Revenue" 
-            fill="#8884d8" 
-            key={`revenue-${uniqueId}`}
-            isAnimationActive={false}
+          <Bar
+            yAxisId="left"
+            dataKey="revenue"
+            name="Revenue"
+            fill="#8884d8"
+            key={`revenue-bar-${uniqueId}`}
           />
           <Bar
             yAxisId="right"
             dataKey="orderCount"
             name="Order Count"
             fill="#82ca9d"
-            key={`order-count-${uniqueId}`}
-            isAnimationActive={false}
+            key={`order-count-bar-${uniqueId}`}
           />
           {hourlyData[0]?.tablePresence !== undefined && (
             <Bar
@@ -164,8 +145,7 @@ const PeakSalesHoursChart = ({ orders }) => {
               dataKey="tablePresence"
               name="Table Occupancy"
               fill="#ffc658"
-              key={`table-presence-${uniqueId}`}
-              isAnimationActive={false}
+              key={`table-presence-bar-${uniqueId}`}
             />
           )}
         </BarChart>
