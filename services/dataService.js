@@ -1,8 +1,31 @@
 // Customer-facing API calls
+// Add a utility function to handle fetch requests with timeouts
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 15000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    
+    throw error;
+  }
+};
 
 export const fetchCustomerOrders = async (table_token) => {
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `/api/orders-for-table/get?table_token=${table_token}`,
       {
         headers: {
@@ -21,7 +44,7 @@ export const fetchCustomerOrders = async (table_token) => {
 
 export const callWaiter = async (table_token) => {
   try {
-    const response = await fetch("/api/table-call-waiter/get", {
+    const response = await fetchWithTimeout("/api/table-call-waiter/get", {
       headers: {
         "Content-Type": "application/json",
         "table-token": table_token,
@@ -39,7 +62,7 @@ export const callWaiter = async (table_token) => {
 
 export const callWaiterForBill = async (table_token) => {
   try {
-    const response = await fetch("/api/table-call-waiter-for-bill/get", {
+    const response = await fetchWithTimeout("/api/table-call-waiter-for-bill/get", {
       headers: {
         "Content-Type": "application/json",
         "table-token": table_token,
@@ -58,7 +81,7 @@ export const callWaiterForBill = async (table_token) => {
 
 export const createInventoryItem = async (newProduct) => {
   try {
-    const response = await fetch("/api/inventory/create", {
+    const response = await fetchWithTimeout("/api/inventory/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newProduct),
@@ -73,7 +96,7 @@ export const createInventoryItem = async (newProduct) => {
 
 export const updateInventoryItem = async (editStock, itemId) => {
   try {
-    const response = await fetch("/api/inventory/update", {
+    const response = await fetchWithTimeout("/api/inventory/update", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -94,7 +117,7 @@ export const updateInventoryItem = async (editStock, itemId) => {
 
 export const deleteInventoryItem = async (itemId) => {
   try {
-    const response = await fetch("/api/inventory/delete", {
+    const response = await fetchWithTimeout("/api/inventory/delete", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: itemId }),
@@ -112,7 +135,7 @@ export const deleteInventoryItem = async (itemId) => {
 
 export const addInventoryStock = async (itemId, quantityToAdd) => {
   try {
-    const response = await fetch("/api/inventory/add-stock", {
+    const response = await fetchWithTimeout("/api/inventory/add-stock", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -133,7 +156,7 @@ export const addInventoryStock = async (itemId, quantityToAdd) => {
 
 export const fetchAdminMenuData = async () => {
   try {
-    const response = await fetch("/api/admin-menu/get");
+    const response = await fetchWithTimeout("/api/admin-menu/get");
     if (!response.ok) {
       throw new Error("Failed to fetch admin menu data");
     }
@@ -146,7 +169,7 @@ export const fetchAdminMenuData = async () => {
 
 export const fetchMenuData = async (token) => {
   try {
-    const response = await fetch("/api/menu-items/get", {
+    const response = await fetchWithTimeout("/api/menu-items/get", {
       headers: {
         "table-token": token,
       },
@@ -165,7 +188,7 @@ export const fetchMenuData = async (token) => {
 
 export const fetchTableData = async () => {
   try {
-    const response = await fetch("/api/tables/get");
+    const response = await fetchWithTimeout("/api/tables/get");
     const data = await response.json();
     return JSON.parse(data);
   } catch (error) {
@@ -176,7 +199,7 @@ export const fetchTableData = async () => {
 
 export const fetchCategoryData = async () => {
   try {
-    const response = await fetch("/api/categories/get");
+    const response = await fetchWithTimeout("/api/categories/get");
     const data = await response.json();
     return JSON.parse(data);
   } catch (error) {
@@ -187,7 +210,7 @@ export const fetchCategoryData = async () => {
 
 export const insertCategory = async (category_name) => {
   try {
-    const response = await fetch("/api/categories/create", {
+    const response = await fetchWithTimeout("/api/categories/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category_name }),
@@ -207,7 +230,7 @@ export const insertCategory = async (category_name) => {
 
 export const deleteCategory = async (category_id) => {
   try {
-    const response = await fetch("/api/categories/delete", {
+    const response = await fetchWithTimeout("/api/categories/delete", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category_id }),
@@ -234,7 +257,7 @@ export const deleteCategory = async (category_id) => {
 
 export const fetchInventoryData = async () => {
   try {
-    const response = await fetch("/api/inventory/get");
+    const response = await fetchWithTimeout("/api/inventory/get");
     const data = await response.json();
     return JSON.parse(data);
   } catch (error) {
@@ -245,7 +268,7 @@ export const fetchInventoryData = async () => {
 
 export const fetchOrderData = async () => {
   try {
-    const response = await fetch("/api/orders/get");
+    const response = await fetchWithTimeout("/api/orders/get");
     const data = await response.json();
 
     return JSON.parse(data);
@@ -265,7 +288,7 @@ export const saveTableLayout = async (tables) => {
       rotation: parseInt(table.rotation),
     }));
 
-    const response = await fetch("/api/tables/create", {
+    const response = await fetchWithTimeout("/api/tables/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(tablesToSave),
@@ -285,7 +308,7 @@ export const saveTableLayout = async (tables) => {
 
 export const deleteTable = async (table_num) => {
   try {
-    const response = await fetch("/api/tables/delete", {
+    const response = await fetchWithTimeout("/api/tables/delete", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ table_num }),
@@ -305,7 +328,7 @@ export const deleteTable = async (table_num) => {
 
 export const insertMenuItem = async (menuItem) => {
   try {
-    const response = await fetch("/api/menu-items/create", {
+    const response = await fetchWithTimeout("/api/menu-items/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -330,7 +353,7 @@ export const insertMenuItem = async (menuItem) => {
 
 export const updateMenuItem = async (menuItem) => {
   try {
-    const response = await fetch("/api/menu-items/update", {
+    const response = await fetchWithTimeout("/api/menu-items/update", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -356,7 +379,7 @@ export const updateMenuItem = async (menuItem) => {
 
 export const deleteMenuItem = async (itemId) => {
   try {
-    const response = await fetch("/api/menu-items/delete", {
+    const response = await fetchWithTimeout("/api/menu-items/delete", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId }),
@@ -376,7 +399,7 @@ export const deleteMenuItem = async (itemId) => {
 
 export const fetchAdminSettings = async () => {
   try {
-    const response = await fetch("/api/admin-settings/get");
+    const response = await fetchWithTimeout("/api/admin-settings/get");
     
     if (!response.ok) {
       const errorData = await response.json();
@@ -393,7 +416,7 @@ export const fetchAdminSettings = async () => {
 
 export const updateAdminSettings = async (settings) => {
   try {
-    const response = await fetch("/api/admin-settings/update", {
+    const response = await fetchWithTimeout("/api/admin-settings/update", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),
@@ -410,7 +433,7 @@ export const updateAdminSettings = async (settings) => {
 
 export const createAdminSettings = async (settings) => {
   try {
-    const response = await fetch("/api/admin-settings/create", {
+    const response = await fetchWithTimeout("/api/admin-settings/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),
@@ -427,7 +450,7 @@ export const createAdminSettings = async (settings) => {
 
 export const verifyAdminPassword = async (password) => {
   try {
-    const response = await fetch("/api/admin-settings/get");
+    const response = await fetchWithTimeout("/api/admin-settings/get");
     if (!response.ok) {
       throw new Error("Failed to verify admin password");
     }

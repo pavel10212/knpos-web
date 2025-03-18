@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState, useCallback} from "react";
 import {useParams} from "next/navigation";
 import Head from "next/head";
 import Header from "@/components/Header";
@@ -34,7 +34,7 @@ export default function MenuPage() {
         }
     }, [params.token]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         if (!token) return;
 
         try {
@@ -66,9 +66,9 @@ export default function MenuPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, setDataItems, setMenuItems, setInventoryItems]);
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         // Try to get categories from sessionStorage first
         if (typeof window !== 'undefined') {
             const cachedCategories = sessionStorage.getItem('categories');
@@ -92,17 +92,17 @@ export default function MenuPage() {
         } catch (error) {
             console.error("Error fetching categories:", error);
         }
-    };
+    }, [setCategories, setCategoryItems]);
 
     useEffect(() => {
         fetchCategories();
-    }, []);
+    }, [fetchCategories]);
 
     useEffect(() => {
         if (token) {
             fetchData();
         }
-    }, [token]);
+    }, [token, fetchData]);
 
     const handleCategoryClick = (categoryId) => {
         const headerHeight = document.querySelector("header").offsetHeight || 180;

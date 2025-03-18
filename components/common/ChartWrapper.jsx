@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * ChartWrapper component isolates chart instances to prevent React key conflicts
@@ -10,11 +10,15 @@ import React, { useState, useEffect } from 'react';
  */
 const ChartWrapper = ({ children, dependencies = [] }) => {
   const [key, setKey] = useState(Date.now());
+  const depsRef = useRef(dependencies);
   
   // Reset the key whenever dependencies change, forcing a full remount
   useEffect(() => {
-    setKey(Date.now());
-  }, dependencies);
+    if (JSON.stringify(depsRef.current) !== JSON.stringify(dependencies)) {
+      depsRef.current = dependencies;
+      setKey(Date.now());
+    }
+  }, [dependencies]);
   
   return (
     <div key={key} className="chart-wrapper">

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Existing config options here...
-  
+
   // Add this option to suppress hydration warnings
   reactStrictMode: true,
   onDemandEntries: {
@@ -19,7 +19,7 @@ const nextConfig = {
   
   // This tells Next.js to ignore certain attributes during hydration
   experimental: {
-    // Other experimental features...
+// Other experimental features...
     
     // This suppresses the specific hydration warnings for Grammarly extension attributes
     // Note: This is experimental and may change in future Next.js versions

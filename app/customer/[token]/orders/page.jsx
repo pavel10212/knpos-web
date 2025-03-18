@@ -139,7 +139,7 @@ export default function Orders() {
   const handleSettleBill = useCallback(() => {
     alert("Waiter has been notified and will bring your bill shortly!");
     callWaiterForBill(token)
-  }, []);
+  }, [token]);
 
   // If token is missing or invalid, show a friendly goodbye message
   if (!token) {
@@ -178,7 +178,7 @@ export default function Orders() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
             </div>
-            <p className="text-gray-600 mb-6">You haven't placed any orders yet</p>
+            <p className="text-gray-600 mb-6">You haven&apos;t placed any orders yet</p>
             <button
               onClick={() => router.back()}
               className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-200"

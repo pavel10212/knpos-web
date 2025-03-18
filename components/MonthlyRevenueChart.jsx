@@ -18,9 +18,10 @@ const MonthlyRevenueChart = ({ orders }) => {
     // Initialize last 12 months
     for (let i = 11; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      // Use shorter month format
       const monthKey = date.toLocaleDateString("en-US", {
         year: "numeric",
-        month: "long",
+        month: "short", // Changed from 'long' to 'short'
       });
       data[monthKey] = {
         month: monthKey,
@@ -31,11 +32,11 @@ const MonthlyRevenueChart = ({ orders }) => {
     // Add revenue for each order
     orders.forEach((order) => {
       const date = new Date(order.order_date_time);
+      // Use the same shorter month format for consistency
       const monthKey = date.toLocaleDateString("en-US", {
         year: "numeric",
-        month: "long",
+        month: "short", // Changed from 'long' to 'short'
       });
-
       if (monthKey in data) {
         data[monthKey].revenue += order.total_amount;
       }
@@ -56,7 +57,7 @@ const MonthlyRevenueChart = ({ orders }) => {
             top: 20,
             right: 30,
             left: 20,
-            bottom: 30,
+            bottom: 50, // Increased from 30 to 50 to provide more space for labels
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
@@ -64,9 +65,10 @@ const MonthlyRevenueChart = ({ orders }) => {
             dataKey="month" 
             angle={-45}
             textAnchor="end"
-            height={60}
+            height={65} // Increased from 60 to 65
             interval={0}
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 11 }} // Reduced from 12 to 11
+            dy={10} // Add vertical offset to push labels down a bit
           />
           <YAxis
             tickFormatter={(value) => `฿${value.toFixed(0)}`}
