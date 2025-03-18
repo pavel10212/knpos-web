@@ -12,12 +12,8 @@ const nextConfig = {
         hostname: 'knpos-bucket-senior-project-2.s3.us-east-1.amazonaws.com',
       },
     ],
-  },
-  experimental: {
-    // Remove these problematic options
-    // turbo: false,
-    // suppressHydrationWarning: true,
-  },
+  }
+  // Remove experimental section entirely
 }
 
 module.exports = nextConfig
