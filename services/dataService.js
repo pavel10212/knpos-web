@@ -23,6 +23,12 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 15000) => {
   }
 };
 
+// Helper function to add cache-busting timestamp
+const addCacheBusting = (url) => {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_t=${Date.now()}`;
+};
+
 export const fetchCustomerOrders = async (table_token) => {
   try {
     const response = await fetchWithTimeout(
@@ -156,7 +162,14 @@ export const addInventoryStock = async (itemId, quantityToAdd) => {
 
 export const fetchAdminMenuData = async () => {
   try {
-    const response = await fetchWithTimeout("/api/admin-menu/get");
+    const cachebustedUrl = addCacheBusting("/api/admin-menu/get");
+    const response = await fetchWithTimeout(cachebustedUrl, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     if (!response.ok) {
       throw new Error("Failed to fetch admin menu data");
     }
@@ -169,9 +182,13 @@ export const fetchAdminMenuData = async () => {
 
 export const fetchMenuData = async (token) => {
   try {
-    const response = await fetchWithTimeout("/api/menu-items/get", {
+    const cachebustedUrl = addCacheBusting("/api/menu-items/get");
+    const response = await fetchWithTimeout(cachebustedUrl, {
       headers: {
         "table-token": token,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
     });
 
@@ -199,7 +216,14 @@ export const fetchTableData = async () => {
 
 export const fetchCategoryData = async () => {
   try {
-    const response = await fetchWithTimeout("/api/categories/get");
+    const cachebustedUrl = addCacheBusting("/api/categories/get");
+    const response = await fetchWithTimeout(cachebustedUrl, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     const data = await response.json();
     return JSON.parse(data);
   } catch (error) {
@@ -232,7 +256,12 @@ export const deleteCategory = async (category_id) => {
   try {
     const response = await fetchWithTimeout("/api/categories/delete", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
       body: JSON.stringify({ category_id }),
     });
 
@@ -381,7 +410,12 @@ export const deleteMenuItem = async (itemId) => {
   try {
     const response = await fetchWithTimeout("/api/menu-items/delete", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
       body: JSON.stringify({ itemId }),
     });
 

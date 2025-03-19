@@ -42,7 +42,7 @@ const AddProductModal = ({
                       inventory_item_name: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-black"
                   required
                 />
               </div>
@@ -56,7 +56,7 @@ const AddProductModal = ({
                   onChange={(e) =>
                     setNewProduct({ ...newProduct, category: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-black"
                   required
                 />
               </div>
@@ -70,7 +70,7 @@ const AddProductModal = ({
                   onChange={(e) =>
                     setNewProduct({ ...newProduct, quantity: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-black"
                   required
                 />
               </div>
@@ -84,7 +84,7 @@ const AddProductModal = ({
                   onChange={(e) =>
                     setNewProduct({ ...newProduct, unit: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-black"
                   required
                 />
               </div>
@@ -94,7 +94,7 @@ const AddProductModal = ({
                 </label>
                 <div className="relative rounded-lg">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">$</span>
+                    <span className="text-gray-500 sm:text-sm">฿</span>
                   </div>
                   <input
                     type="number"
@@ -106,7 +106,7 @@ const AddProductModal = ({
                         cost_per_unit: e.target.value,
                       })
                     }
-                    className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-black"
                     required
                   />
                 </div>
@@ -124,7 +124,7 @@ const AddProductModal = ({
                       max_quantity: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-black"
                   required
                 />
               </div>
