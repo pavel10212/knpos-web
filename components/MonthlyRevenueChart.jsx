@@ -61,8 +61,8 @@ const MonthlyRevenueChart = ({ orders }) => {
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="month" 
+          <XAxis
+            dataKey="month"
             angle={-45}
             textAnchor="end"
             height={65} // Increased from 60 to 65
@@ -70,12 +70,8 @@ const MonthlyRevenueChart = ({ orders }) => {
             tick={{ fontSize: 11 }} // Reduced from 12 to 11
             dy={10} // Add vertical offset to push labels down a bit
           />
-          <YAxis
-            tickFormatter={(value) => `฿${value.toFixed(0)}`}
-          />
-          <Tooltip 
-            formatter={(value) => [`฿${value.toFixed(2)}`, "Revenue"]}
-          />
+          <YAxis tickFormatter={(value) => `฿${value.toFixed(0)}`} />
+          <Tooltip formatter={(value) => [`฿${value.toFixed(2)}`, "Revenue"]} />
           <Legend />
           <Line
             type="monotone"

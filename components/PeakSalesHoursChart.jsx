@@ -1,4 +1,4 @@
-import React, { useMemo, useId } from "react";
+import React, { useMemo, useId, useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -12,6 +12,28 @@ import {
 
 const PeakSalesHoursChart = ({ orders }) => {
   const uniqueId = useId();
+  const [windowWidth, setWindowWidth] = useState(0);
+
+  // Track window width for responsive adjustments
+  useEffect(() => {
+    // Set initial width
+    setWindowWidth(window.innerWidth);
+
+    // Update width on resize
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobileView = windowWidth < 768;
+
+  // Calculate appropriate bar size based on screen width
+  const barSize = useMemo(() => {
+    if (windowWidth < 480) return 12; // Extra thick on very small screens
+    if (windowWidth < 768) return 10; // Thick on tablets/mobile
+    return undefined; // Default size on desktop
+  }, [windowWidth]);
 
   const hourlyData = useMemo(() => {
     if (!Array.isArray(orders) || orders.length === 0) {
@@ -86,7 +108,8 @@ const PeakSalesHoursChart = ({ orders }) => {
       }
 
       visit.hours.forEach((hour) => {
-        hourlyStats[hour].tablePresence = (hourlyStats[hour].tablePresence || 0) + 1;
+        hourlyStats[hour].tablePresence =
+          (hourlyStats[hour].tablePresence || 0) + 1;
       });
     });
 
@@ -104,17 +127,24 @@ const PeakSalesHoursChart = ({ orders }) => {
             top: 20,
             right: 30,
             left: 20,
-            bottom: 30,
+            bottom: isMobileView ? 50 : 30,
           }}
           id={chartId}
+          barSize={barSize}
+          barGap={isMobileView ? 1 : 4}
+          barCategoryGap={isMobileView ? 2 : 10}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="displayHour"
-            tick={{ fontSize: 12 }}
-            interval={1}
-            angle={-45}
+            tick={{
+              fontSize: isMobileView ? 10 : 12,
+              dy: 8,
+            }}
+            interval={isMobileView ? 2 : 1}
+            angle={isMobileView ? -90 : -45}
             textAnchor="end"
+            height={isMobileView ? 60 : 30}
           />
           <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
           <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
